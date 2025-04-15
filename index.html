@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CitySim - 都市シミュレーション</title>
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <meta name="description" content="CitySim - 都市開発シミュレーションゲーム。あなたの都市を建設し、管理しましょう。">
+    <meta name="theme-color" content="#3498db">
+</head>
+<body>
+    <header class="game-header">
+        <div class="logo-container">
+            <h1 class="game-logo"><i class="fas fa-city"></i> CitySim</h1>
+            <p class="game-tagline">あなたの理想の都市を作ろう</p>
+        </div>
+        <div class="header-controls">
+            <div class="clock-container">
+                <div id="clock" class="game-clock"></div>
+                <div class="progress-container">
+                    <div id="time-progress-bar"></div>
+                </div>
+            </div>
+            <button id="toggle-menu" class="toggle-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="notifications-area">
+        <div class="fixed-events-container">
+            <h3><i class="fas fa-bell"></i> イベント通知</h3>
+            <div id="fixed-events" class="fixed-events">
+                <!-- イベント通知がここに表示されます -->
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <section class="city-overview">
+            <div class="overview-card">
+                <div class="overview-icon"><i class="fas fa-users"></i></div>
+                <div class="overview-details">
+                    <span class="overview-value population-value">0</span>
+                    <span class="overview-label">人口</span>
+                </div>
+            </div>
+            <div class="overview-card">
+                <div class="overview-icon"><i class="fas fa-coins"></i></div>
+                <div class="overview-details">
+                    <span class="overview-value funds-value">¥1,000</span>
+                    <span class="overview-label">資金</span>
+                </div>
+            </div>
+            <div class="overview-card">
+                <div class="overview-icon"><i class="fas fa-calendar-alt"></i></div>
+                <div class="overview-details">
+                    <span class="overview-value year-value">2025年</span>
+                    <span class="overview-label">年</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="dashboard">
+            <div class="city-stats" id="city-details">
+                <h2><i class="fas fa-chart-line"></i> 都市統計</h2>
+                
+                <div class="stats-group">
+                    <h3><i class="fas fa-info-circle"></i> 基本情報</h3>
+                    <div class="stat-item">
+                        <span>年</span>
+                        <span class="year-value"></span>
+                    </div>
+                    <div class="stat-item">
+                        <span>人口</span>
+                        <span class="population-value"></span>
+                    </div>
+                    <div class="stat-item">
+                        <span>資金</span>
+                        <span class="funds-value"></span>
+                    </div>
+                </div>
+
+                <div class="stats-group">
+                    <h3><i class="fas fa-building"></i> インフラ</h3>
+                    <div class="stat-item">
+                        <span>住宅</span>
+                        <span class="houses-value"></span>
+                    </div>
+                    <div class="stat-item">
+                        <span>工場</span>
+                        <span class="factories-value"></span>
+                    </div>
+                    <div class="stat-item">
+                        <span>道路</span>
+                        <span class="roads-value"></span>
+                    </div>
+                </div>
+
+                <div class="stats-group">
+                    <h3><i class="fas fa-chart-pie"></i> 都市メトリクス</h3>
+                    <div class="stat-item">
+                        <span>幸福度</span>
+                        <span class="happiness-value"></span>
+                    </div>
+                    <div class="progress-container">
+                        <div id="happiness-bar" class="stat-progress-bar happiness-bar"></div>
+                    </div>
+                    <div class="stat-item">
+                        <span>環境</span>
+                        <span class="environment-value"></span>
+                    </div>
+                    <div class="progress-container">
+                        <div id="environment-bar" class="stat-progress-bar environment-bar"></div>
+                    </div>
+                    <div class="stat-item">
+                        <span>教育</span>
+                        <span class="education-value"></span>
+                    </div>
+                    <div class="progress-container">
+                        <div id="education-bar" class="stat-progress-bar education-bar"></div>
+                    </div>
+                    <div class="stat-item">
+                        <span>税率</span>
+                        <span class="tax-value"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-content">
+                <div class="game-log-container">
+                    <h2><i class="fas fa-history"></i> ゲームログ</h2>
+                    <div class="game-log" id="game-output">
+                        <!-- ゲームログはここに表示されます -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-panel">
+            <div class="action-tabs">
+                <button class="tab-btn active" data-tab="build"><i class="fas fa-hammer"></i> 建設</button>
+                <button class="tab-btn" data-tab="economy"><i class="fas fa-money-bill-wave"></i> 経済</button>
+                <button class="tab-btn" data-tab="policy"><i class="fas fa-balance-scale"></i> 政策</button>
+            </div>
+            
+            <div class="tab-content" id="build-tab">
+                <div class="game-actions" id="build-actions">
+                    <!-- 建設アクションボタンが動的に追加されます -->
+                </div>
+            </div>
+            
+            <div class="tab-content hidden" id="economy-tab">
+                <div class="game-actions" id="economy-actions">
+                    <!-- 経済アクションボタンが動的に追加されます -->
+                </div>
+            </div>
+            
+            <div class="tab-content hidden" id="policy-tab">
+                <div class="game-actions" id="policy-actions">
+                    <!-- 政策アクションボタンが動的に追加されます -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tutorial-overlay" id="tutorial-overlay">
+        <div class="tutorial-content">
+            <h2><i class="fas fa-graduation-cap"></i> CitySim チュートリアル</h2>
+            <p>CitySim へようこそ！このシミュレーションゲームでは、あなたは新しい都市の市長として、都市を発展させる責任があります。</p>
+            
+            <div id="tutorial-steps">
+                <!-- チュートリアルステップが動的に追加されます -->
+            </div>
+            
+            <button id="close-tutorial" class="tutorial-btn">始める</button>
+        </div>
+    </div>
+
+    <!-- 動的プリロード -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
