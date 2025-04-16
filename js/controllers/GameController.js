@@ -7,6 +7,7 @@ import { GameConfig } from '../config/GameConfig.js';
 import { DistrictsConfig } from '../config/DistrictsConfig.js';
 import { BuildingFactory } from '../models/Building.js';
 import { EventEmitter } from '../services/EventEmitter.js';
+import { ClickerController } from './ClickerController.js';
 
 export class GameController {
     /**
@@ -22,6 +23,12 @@ export class GameController {
         this.eventSystem = eventSystem;
         this.uiController = uiController;
         this.events = new EventEmitter();
+        
+        // クリッカーコントローラーの初期化
+        this.clickerController = new ClickerController(city, uiController);
+        
+        // ゲームモード
+        this.gameMode = 'city'; // 'city' または 'clicker'
         
         // セーブデータロード試行
         this.loaded = false;
@@ -47,6 +54,32 @@ export class GameController {
             city: this.city,
             timestamp: new Date()
         });
+    }
+    
+    /**
+     * ゲームモードを切り替える
+     * @param {string} mode - ゲームモード ('city' または 'clicker')
+     */
+    switchGameMode(mode) {
+        if (mode === this.gameMode) return;
+        
+        this.gameMode = mode;
+        
+        if (mode === 'clicker') {
+            // クリッカーモードに切り替え
+            this.clickerController.show();
+            // 時間を一時停止（オプション）
+            // this.timeManager.pause();
+            
+            this.events.emit('gameModeChanged', { mode: 'clicker' });
+        } else {
+            // 都市管理モードに切り替え
+            this.clickerController.hide();
+            // 時間を再開（オプション）
+            // this.timeManager.resume();
+            
+            this.events.emit('gameModeChanged', { mode: 'city' });
+        }
     }
     
     /**
@@ -220,6 +253,21 @@ export class GameController {
             this.advanceYear();
         });
         
+        // クリッカーモード切替リクエスト
+        this.uiController.events.on('clickerModeRequest', () => {
+            this.switchGameMode('clicker');
+        });
+        
+        // 都市管理モード切替リクエスト
+        this.uiController.events.on('cityModeRequest', () => {
+            this.switchGameMode('city');
+        });
+        
+        // 統計データエクスポートリクエスト
+        this.uiController.events.on('exportStatsRequest', () => {
+            this.exportStatistics();
+        });
+        
         // イベントシステムからのイベント通知
         this.eventSystem.events.on('eventTriggered', (data) => {
             // UIにイベントを表示
@@ -339,6 +387,12 @@ export class GameController {
             // 読み込んだデータでモデルを更新
             this.city = result.city;
             
+            // クリッカーデータを復元
+            if (result.city.clickerData) {
+                this.clickerController = new ClickerController(this.city, this.uiController);
+                this.clickerController.loadState(saveManager);
+            }
+            
             if (result.timeManager) {
                 // 時間マネージャーのプロパティを更新
                 this.timeManager.setTime({
@@ -401,6 +455,11 @@ export class GameController {
             };
         }
         
+        // クリッカーデータを保存
+        if (this.clickerController) {
+            this.clickerController.saveState(saveManager);
+        }
+        
         const result = saveManager.saveGame(saveType);
         
         if (result.success && saveType === 'manual') {
@@ -425,7 +484,7 @@ export class GameController {
     }
     
     /**
-     * 統計データをエクスポートする（新機能）
+     * 統計データをエクスポートする
      * @returns {Object} - エクスポート結果
      */
     exportStatistics() {
@@ -451,12 +510,27 @@ export class GameController {
             a.click();
             document.body.removeChild(a);
             
+            this.uiController.addEventToLog({
+                title: '統計データのエクスポート',
+                message: '統計データがJSONファイルとしてダウンロードされました。',
+                type: 'event-success',
+                icon: 'file-export'
+            });
+            
             return {
                 success: true,
                 message: '統計データのエクスポートが完了しました。'
             };
         } catch (error) {
             console.error('Statistics export error:', error);
+            
+            this.uiController.addEventToLog({
+                title: '統計データのエクスポート失敗',
+                message: `エクスポートに失敗しました: ${error.message}`,
+                type: 'event-danger',
+                icon: 'exclamation-triangle'
+            });
+            
             return {
                 success: false,
                 message: `統計データのエクスポートに失敗しました: ${error.message}`
@@ -479,7 +553,8 @@ export class GameController {
                 city: this.city,
                 timeManager: this.timeManager,
                 eventSystem: this.eventSystem,
-                uiController: this.uiController
+                uiController: this.uiController,
+                clickerController: this.clickerController
             };
             
             this.uiController.addEventToLog({
