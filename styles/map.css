@@ -1,0 +1,185 @@
+/* 都市マップスタイル */
+
+.city-map-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  border-radius: var(--border-radius);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.city-map-canvas {
+  display: block;
+  position: relative;
+  margin: 0 auto;
+  touch-action: none;
+}
+
+.map-controls {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 100;
+}
+
+.map-control-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: white;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1rem;
+  color: var(--dark-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.map-control-btn:hover {
+  background-color: var(--primary-color);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.map-info-panel {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  max-width: 200px;
+  z-index: 100;
+  font-size: 0.9rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.map-info-panel.visible {
+  opacity: 1;
+}
+
+.district-tooltip {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  pointer-events: none;
+  z-index: 1000;
+  max-width: 150px;
+  transform: translate(-50%, -100%);
+  margin-top: -10px;
+}
+
+.district-tooltip:after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid rgba(0, 0, 0, 0.8);
+}
+
+.legend {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  z-index: 100;
+  font-size: 0.8rem;
+}
+
+.legend-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 5px;
+}
+
+.legend-color.residential {
+  background-color: #3498db;
+}
+
+.legend-color.commercial {
+  background-color: #f39c12;
+}
+
+.legend-color.industrial {
+  background-color: #e74c3c;
+}
+
+.legend-color.education {
+  background-color: #9b59b6;
+}
+
+.legend-color.eco {
+  background-color: #2ecc71;
+}
+
+.minimap {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 100px;
+  height: 100px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.minimap-viewport {
+  position: absolute;
+  border: 1px solid var(--primary-color);
+  background-color: rgba(52, 152, 219, 0.1);
+  pointer-events: none;
+}
+
+/* モバイル向けスタイル調整 */
+@media (max-width: 768px) {
+  .map-controls {
+    flex-direction: row;
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    justify-content: center;
+  }
+  
+  .legend, .minimap {
+    display: none;
+  }
+}
