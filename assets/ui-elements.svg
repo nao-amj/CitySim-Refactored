@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="192" height="64" viewBox="0 0 192 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- 選択表示 (0, 0) -->
+  <g transform="translate(0, 0)">
+    <rect x="2" y="2" width="60" height="60" fill="none" stroke="#ffcc00" stroke-width="4" rx="4" ry="4" stroke-dasharray="8,4" />
+    <rect x="0" y="0" width="8" height="8" fill="#ffcc00" rx="2" ry="2" />
+    <rect x="56" y="0" width="8" height="8" fill="#ffcc00" rx="2" ry="2" />
+    <rect x="0" y="56" width="8" height="8" fill="#ffcc00" rx="2" ry="2" />
+    <rect x="56" y="56" width="8" height="8" fill="#ffcc00" rx="2" ry="2" />
+  </g>
+
+  <!-- ハイライト表示 (1, 0) -->
+  <g transform="translate(64, 0)">
+    <rect x="2" y="2" width="60" height="60" fill="rgba(255, 255, 255, 0.2)" stroke="#ffffff" stroke-width="2" rx="4" ry="4" />
+    <circle cx="32" cy="32" r="16" fill="none" stroke="#ffffff" stroke-width="2" />
+    <circle cx="32" cy="32" r="4" fill="#ffffff" />
+  </g>
+
+  <!-- 新規作成アイコン (2, 0) -->
+  <g transform="translate(128, 0)">
+    <circle cx="32" cy="32" r="24" fill="rgba(52, 152, 219, 0.3)" stroke="#3498db" stroke-width="2" />
+    <rect x="20" y="30" width="24" height="4" fill="#3498db" rx="2" ry="2" />
+    <rect x="30" y="20" width="4" height="24" fill="#3498db" rx="2" ry="2" />
+  </g>
+</svg>
