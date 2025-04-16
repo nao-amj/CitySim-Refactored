@@ -1271,12 +1271,24 @@ body {
     line-height: 1.5;
 }
 
+.step-counter {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    color: #666;
+    padding: 5px 10px;
+    background-color: #f9f9f9;
+    border-radius: 15px;
+    display: inline-block;
+}
+
 .tutorial-step {
     margin-bottom: 20px;
     padding: 15px;
     background-color: #f9f9f9;
     border-radius: var(--border-radius);
     border-left: 4px solid var(--primary-color);
+    animation: fadeIn 0.5s;
 }
 
 .tutorial-step h3 {
@@ -1302,13 +1314,16 @@ body {
     font-size: 1rem;
     cursor: pointer;
     transition: background-color 0.2s, transform 0.2s;
-    display: block;
-    margin: 30px auto 0;
+    display: inline-block;
 }
 
 .tutorial-btn:hover {
     background-color: var(--dark-color);
     transform: translateY(-2px);
+}
+
+.next-btn {
+    background-color: var(--secondary-color);
 }
 
 /* モバイルレスポンシブ */
