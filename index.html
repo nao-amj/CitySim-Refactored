@@ -54,6 +54,13 @@
                 </div>
             </div>
             <div class="overview-card">
+                <div class="overview-icon"><i class="fas fa-map-marked-alt"></i></div>
+                <div class="overview-details">
+                    <span class="overview-value districts-count">0</span>
+                    <span class="overview-label">地区</span>
+                </div>
+            </div>
+            <div class="overview-card">
                 <div class="overview-icon"><i class="fas fa-calendar-alt"></i></div>
                 <div class="overview-details">
                     <span class="overview-value year-value">2025年</span>
@@ -96,6 +103,10 @@
                         <span>道路</span>
                         <span class="roads-value"></span>
                     </div>
+                    <div class="stat-item">
+                        <span>地区</span>
+                        <span class="districts-count"></span>
+                    </div>
                 </div>
 
                 <div class="stats-group">
@@ -126,6 +137,13 @@
                         <span class="tax-value"></span>
                     </div>
                 </div>
+                
+                <!-- 統計グラフ表示ボタン -->
+                <div class="stats-group">
+                    <button id="show-stats-charts" class="btn btn-secondary">
+                        <i class="fas fa-chart-bar"></i> 統計グラフを表示
+                    </button>
+                </div>
             </div>
 
             <div class="game-content">
@@ -135,6 +153,56 @@
                         <!-- ゲームログはここに表示されます -->
                     </div>
                 </div>
+                
+                <!-- 地区詳細表示エリア -->
+                <div class="district-details-container" id="district-details-container">
+                    <h2><i class="fas fa-map-marked-alt"></i> 地区詳細</h2>
+                    <div id="district-details" class="district-details">
+                        <!-- 地区詳細はここに表示されます -->
+                        <div class="no-district-selected">
+                            <p>地区を選択するか、新しい地区を作成してください。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 都市マップ表示エリア -->
+                <div class="city-map-container" id="city-map-container">
+                    <h2><i class="fas fa-map"></i> 都市マップ</h2>
+                    <div id="city-map" class="city-map" style="display: none;">
+                        <!-- 都市マップはここに表示されます -->
+                    </div>
+                </div>
+                
+                <!-- 統計グラフ表示エリア -->
+                <div class="stats-charts-container" id="stats-charts-container">
+                    <h2><i class="fas fa-chart-line"></i> 都市統計グラフ</h2>
+                    <div id="stats-charts" class="stats-charts">
+                        <!-- 統計グラフはここに表示されます -->
+                        <div class="chart-tabs">
+                            <button class="chart-tab active" data-chart="population">人口</button>
+                            <button class="chart-tab" data-chart="funds">資金</button>
+                            <button class="chart-tab" data-chart="happiness">幸福度</button>
+                            <button class="chart-tab" data-chart="environment">環境</button>
+                            <button class="chart-tab" data-chart="education">教育</button>
+                        </div>
+                        <div class="chart-container" id="chart-display">
+                            <!-- グラフがここに表示されます -->
+                        </div>
+                        <div class="chart-controls">
+                            <button id="export-stats" class="btn">
+                                <i class="fas fa-download"></i> 統計データをエクスポート
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 地区リスト表示エリア -->
+            <div class="districts-sidebar">
+                <h2><i class="fas fa-list"></i> 地区リスト</h2>
+                <div id="districts-list" class="districts-list">
+                    <!-- 地区リストはここに表示されます -->
+                </div>
             </div>
         </div>
 
@@ -143,6 +211,8 @@
                 <button class="tab-btn active" data-tab="build"><i class="fas fa-hammer"></i> 建設</button>
                 <button class="tab-btn" data-tab="economy"><i class="fas fa-money-bill-wave"></i> 経済</button>
                 <button class="tab-btn" data-tab="policy"><i class="fas fa-balance-scale"></i> 政策</button>
+                <button class="tab-btn" data-tab="districts"><i class="fas fa-city"></i> 地区</button>
+                <button class="tab-btn" data-tab="stats"><i class="fas fa-chart-bar"></i> 統計</button>
             </div>
             
             <div class="tab-content" id="build-tab">
@@ -162,6 +232,26 @@
                     <!-- 政策アクションボタンが動的に追加されます -->
                 </div>
             </div>
+            
+            <div class="tab-content hidden" id="districts-tab">
+                <div class="game-actions" id="districts-actions">
+                    <!-- 地区アクションボタンが動的に追加されます -->
+                </div>
+            </div>
+            
+            <div class="tab-content hidden" id="stats-tab">
+                <div class="game-actions" id="stats-actions">
+                    <!-- 統計アクションボタンが動的に追加されます -->
+                    <button class="action-btn" data-action="show_stats_charts">
+                        <i class="fas fa-chart-line"></i>
+                        <span>統計グラフを表示</span>
+                    </button>
+                    <button class="action-btn" data-action="export_stats">
+                        <i class="fas fa-file-export"></i>
+                        <span>統計データをエクスポート</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -178,6 +268,9 @@
         </div>
     </div>
 
+    <!-- Chart.js の追加 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <!-- 動的プリロード -->
     <script type="module" src="js/main.js"></script>
 </body>
