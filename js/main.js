@@ -18,6 +18,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // ゲームインスタンスの初期化
     initGame();
+    
+    // チュートリアルボタンのイベントリスナー修正
+    const closeButton = document.getElementById('close-tutorial');
+    if (closeButton) {
+        closeButton.addEventListener('click', function() {
+            const overlay = document.getElementById('tutorial-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+                localStorage.setItem(GameConfig.TUTORIAL.STORAGE_KEY, 'true');
+            }
+        });
+    }
 });
 
 /**
@@ -39,14 +51,22 @@ function initGame() {
     // 各サービスの初期化
     const timeManager = new TimeManager();
     const eventSystem = new EventSystem(city, timeManager);
-    const saveManager = new SaveManager(city);
+    const saveManager = new SaveManager(city, timeManager);
     
     // コントローラーの初期化
     const uiController = new UIController(city, timeManager);
     const gameController = new GameController(city, timeManager, eventSystem, uiController);
     
+    // 保存データがあれば読み込み
+    const loadResult = gameController.loadGame(saveManager);
+    
     // ゲームの開始
     gameController.start();
+    
+    // 自動保存の設定
+    window.addEventListener('beforeunload', () => {
+        saveManager.saveGame('auto');
+    });
     
     // グローバルでのデバッグアクセス（開発時のみ）
     if (GameConfig.DEBUG_MODE) {
@@ -55,7 +75,8 @@ function initGame() {
             timeManager,
             eventSystem,
             gameController,
-            uiController
+            uiController,
+            saveManager
         };
     }
 }
