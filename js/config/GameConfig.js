@@ -4,6 +4,9 @@
  */
 
 export const GameConfig = {
+    // バージョン設定
+    VERSION: '2.0.0',
+    
     // デバッグモード設定
     DEBUG_MODE: false,
     
@@ -88,6 +91,94 @@ export const GameConfig = {
                 population: 8
             },
             description: "市民の健康を守り、幸福度を上げます。人口の増加にも貢献します。"
+        },
+        // 新しいクリッカー用の建物
+        COIN_MINT: {
+            name: "コイン工場",
+            icon: "coins",
+            cost: 50,
+            effects: {
+                clickMultiplier: 0.1, // クリック当たりの資金が10%増加
+                autoFunds: 1 // 1秒あたり1の自動収入
+            },
+            description: "クリック1回あたりの収入を増やし、少額の自動収入をもたらします。"
+        },
+        BANK: {
+            name: "銀行",
+            icon: "landmark",
+            cost: 300,
+            effects: {
+                autoFunds: 10, // 1秒あたり10の自動収入
+                fundStorage: 500 // 資金保管容量を500増加
+            },
+            description: "自動的に収入を生み出し、資金の保管容量を増やします。"
+        },
+        INVESTMENT_FIRM: {
+            name: "投資会社",
+            icon: "chart-line",
+            cost: 1000,
+            effects: {
+                fundMultiplier: 0.05, // 全ての収入源から5%増加
+                autoFunds: 25
+            },
+            description: "すべての収入を5%増加させ、自動的に資金を生み出します。"
+        }
+    },
+    
+    // クリッカーゲームモード設定
+    CLICKER: {
+        BASE_CLICK_VALUE: 1, // クリック1回あたりの基本獲得資金
+        AUTO_FUNDS_INTERVAL: 1000, // ミリ秒単位での自動収入間隔
+        UNLOCK_THRESHOLDS: {
+            COIN_MINT: 50, // コイン工場の解放に必要な合計獲得資金
+            BANK: 500, // 銀行の解放に必要な合計獲得資金
+            INVESTMENT_FIRM: 2000 // 投資会社の解放に必要な合計獲得資金
+        },
+        UPGRADES: {
+            BETTER_TOOLS: {
+                name: "改良ツール",
+                cost: 100,
+                effect: {
+                    clickMultiplier: 0.5 // クリック価値が50%増加
+                },
+                description: "クリックごとの収入を50%増加させます。"
+            },
+            EFFICIENT_PROCESS: {
+                name: "効率的な工程",
+                cost: 500,
+                effect: {
+                    autoFundsMultiplier: 0.3 // 自動収入が30%増加
+                },
+                description: "自動収入を30%増加させます。"
+            },
+            ADVANCED_ECONOMY: {
+                name: "先進経済",
+                cost: 2000,
+                effect: {
+                    allMultiplier: 0.2 // すべての収入が20%増加
+                },
+                description: "すべての収入源からの収入を20%増加させます。"
+            }
+        },
+        ACHIEVEMENTS: {
+            FIRST_STEPS: {
+                name: "最初の一歩",
+                requirement: { totalClicks: 10 },
+                bonus: { clickMultiplier: 0.1 },
+                description: "10回クリックする"
+            },
+            DEDICATED_MAYOR: {
+                name: "献身的な市長",
+                requirement: { totalClicks: 100 },
+                bonus: { clickMultiplier: 0.2 },
+                description: "100回クリックする"
+            },
+            FINANCIAL_GENIUS: {
+                name: "財政の天才",
+                requirement: { totalFunds: 10000 },
+                bonus: { fundMultiplier: 0.1 },
+                description: "総資金額10,000に到達する"
+            }
         }
     },
     
@@ -127,6 +218,16 @@ export const GameConfig = {
                 title: "年の進行",
                 icon: "calendar-plus",
                 message: "「次の年へ」ボタンでゲーム内時間を進めます。税収が入り、人口やメトリクスが更新されます。"
+            },
+            {
+                title: "地区システム",
+                icon: "map-marked-alt",
+                message: "地区を作成して、都市を効率的に管理しましょう。地区ごとに特化した機能を持たせることができます。"
+            },
+            {
+                title: "クリッカーモード",
+                icon: "coins",
+                message: "資金を素早く稼ぎたい場合は、クリッカーモードを活用しましょう。都市アイコンをクリックして資金を獲得できます。"
             }
         ],
         STORAGE_KEY: 'citysim-tutorial-shown'
@@ -159,7 +260,10 @@ export const GameText = {
         LOAN: "融資",
         TRADE: "貿易",
         EDUCATION_POLICY: "教育投資",
-        ENVIRONMENT_POLICY: "環境政策"
+        ENVIRONMENT_POLICY: "環境政策",
+        CLICKER_MODE: "クリッカーモード",
+        CITY_MANAGEMENT: "都市管理",
+        BUILD_DISTRICT: "地区建設"
     },
     
     // イベント効果のメッセージテンプレート
@@ -179,7 +283,19 @@ export const GameText = {
     // ゲームイベントメッセージ
     WELCOME_MESSAGE: {
         TITLE: "CitySim へようこそ！",
-        CONTENT: "新しい都市の市長に就任しました。都市を発展させましょう。\n\n<strong>使用可能なアクション:</strong>\n• <strong>建設タブ</strong>: 住宅、工場、道路を建設\n• <strong>経済タブ</strong>: 税率設定、融資、貿易\n• <strong>政策タブ</strong>: 年の進行、教育投資、環境政策\n\nさあ、都市開発を始めましょう！"
+        CONTENT: "新しい都市の市長に就任しました。都市を発展させましょう。\n\n<strong>使用可能なアクション:</strong>\n• <strong>建設タブ</strong>: 住宅、工場、道路を建設\n• <strong>経済タブ</strong>: 税率設定、融資、貿易\n• <strong>政策タブ</strong>: 年の進行、教育投資、環境政策\n• <strong>地区タブ</strong>: 地区の作成と管理\n• <strong>クリッカー</strong>: 都市アイコンをクリックして素早く資金を稼ぐ\n\nさあ、都市開発を始めましょう！"
+    },
+    
+    // クリッカーモードのテキスト
+    CLICKER: {
+        TITLE: "資金稼ぎモード",
+        DESCRIPTION: "都市アイコンをクリックして資金を稼ぎましょう！建物を購入すると自動的に資金が増えます。",
+        CLICK_VALUE: "クリック価値: ¥{value}",
+        AUTO_INCOME: "自動収入: ¥{value}/秒",
+        TOTAL_EARNED: "総獲得資金: ¥{value}",
+        TOTAL_CLICKS: "総クリック数: {value}回",
+        UNLOCK_MESSAGE: "新しい建物「{building}」がアンロックされました！",
+        ACHIEVEMENT_UNLOCKED: "実績解除: {name}"
     },
     
     // ヒントメッセージ
@@ -193,6 +309,11 @@ export const GameText = {
         "幸福度が高いと人口増加率が上がります",
         "スペースキーでゲームの一時停止/再開ができます",
         "数字キー1-7でアクションをショートカット操作できます",
-        "教育への投資は長期的な発展につながります"
+        "教育への投資は長期的な発展につながります",
+        "地区を専門化させることで、特定の分野に特化した地区を作れます",
+        "クリッカーモードを活用して素早く資金を稼ぎましょう",
+        "建物のアップグレードは大きな効果をもたらします",
+        "統計グラフで都市の成長を確認しましょう",
+        "実績を解除すると永続的なボーナスが得られます"
     ]
 };
