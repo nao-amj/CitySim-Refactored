@@ -280,6 +280,10 @@ body {
 }
 
 .overview-card:nth-child(3) .overview-icon {
+    background-color: var(--info-color);
+}
+
+.overview-card:nth-child(4) .overview-icon {
     background-color: var(--secondary-color);
 }
 
@@ -366,6 +370,7 @@ body {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+    gap: 20px;
 }
 
 .game-log-container {
@@ -562,6 +567,671 @@ body {
     color: var(--danger-color);
 }
 
+/* 地区システム関連のスタイル */
+.districts-sidebar {
+    width: 250px;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 20px;
+    margin-left: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.districts-sidebar h2 {
+    font-size: 1.2rem;
+    color: var(--dark-color);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.districts-list {
+    overflow-y: auto;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.district-item {
+    display: flex;
+    padding: 12px;
+    border-radius: var(--border-radius);
+    border: 1px solid #eee;
+    background-color: white;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.district-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.district-item.selected {
+    border: 2px solid var(--primary-color);
+    background-color: #f0f7ff;
+}
+
+.district-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.district-item-content {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.district-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 3px;
+}
+
+.district-type {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.district-population {
+    font-size: 0.8rem;
+    color: var(--dark-color);
+    font-weight: 600;
+    margin-left: 5px;
+}
+
+.district-details-container {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.district-details-container h2 {
+    font-size: 1.2rem;
+    color: var(--dark-color);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.district-details {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.no-district-selected {
+    padding: 30px;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+}
+
+.district-header {
+    margin-bottom: 20px;
+}
+
+.district-header h3 {
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.district-header .district-type {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.district-header .district-specialization {
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.district-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.district-stats .stat {
+    background-color: #f9f9f9;
+    border-radius: var(--border-radius);
+    padding: 10px 15px;
+    flex: 1;
+    min-width: 120px;
+}
+
+.district-stats .label {
+    font-size: 0.8rem;
+    color: #666;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.district-stats .value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.district-buildings {
+    margin-bottom: 20px;
+}
+
+.district-buildings h4 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    color: var(--dark-color);
+}
+
+.district-buildings ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.district-buildings li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+    padding: 8px 12px;
+    background-color: #f9f9f9;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+}
+
+.district-buildings .no-buildings {
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    padding: 15px;
+}
+
+.district-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.district-actions .btn {
+    flex: 1;
+    min-width: 160px;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    border: none;
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.district-actions .btn:hover:not([disabled]) {
+    background-color: var(--dark-color);
+    transform: translateY(-2px);
+}
+
+.district-actions .btn i {
+    margin-bottom: 5px;
+}
+
+.district-actions .btn .cost {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.district-actions .btn .max-level {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.district-actions .btn[disabled] {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* ダイアログスタイル */
+.dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.dialog-content {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+    padding: 25px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.dialog-content h2 {
+    margin-bottom: 20px;
+    color: var(--dark-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.3rem;
+}
+
+.dialog-content p {
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    border: 1px solid #ddd;
+    font-size: 1rem;
+}
+
+.description {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.specialization-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.specialization-option {
+    display: flex;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.specialization-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color);
+}
+
+.specialization-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    margin-right: 15px;
+    flex-shrink: 0;
+    font-size: 1.2rem;
+}
+
+.specialization-content {
+    flex-grow: 1;
+}
+
+.specialization-option h4 {
+    margin-bottom: 5px;
+    font-size: 1.1rem;
+}
+
+.specialization-option p {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.specialization-effects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.specialization-effects .effect {
+    padding: 5px 10px;
+    background-color: #f0f7ff;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    color: var(--primary-color);
+}
+
+.building-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.building-option {
+    display: flex;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.building-option:hover:not(.disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color);
+}
+
+.building-option.disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.building-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    color: white;
+    margin-right: 15px;
+    flex-shrink: 0;
+    font-size: 1.2rem;
+}
+
+.building-content {
+    flex-grow: 1;
+}
+
+.building-option h4 {
+    margin-bottom: 5px;
+    font-size: 1.1rem;
+}
+
+.building-option .cost {
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: normal;
+}
+
+.building-option p {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.building-effects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.building-effects .effect {
+    padding: 5px 10px;
+    background-color: #f0f7ff;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    color: var(--primary-color);
+}
+
+.dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--dark-color);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: #eee;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background-color: #ddd;
+    transform: translateY(-2px);
+}
+
+/* 都市マップ */
+.city-map-container {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.city-map-container h2 {
+    font-size: 1.2rem;
+    color: var(--dark-color);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.city-map {
+    width: 100%;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: var(--border-radius);
+}
+
+.city-map-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 5px;
+    max-width: 100%;
+}
+
+.map-cell {
+    aspect-ratio: 1/1;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.map-cell:hover {
+    transform: scale(1.05);
+    z-index: 1;
+}
+
+.district-cell {
+    color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.district-cell[data-district-type="residential"] {
+    background-color: #3498db;
+}
+
+.district-cell[data-district-type="commercial"] {
+    background-color: #f39c12;
+}
+
+.district-cell[data-district-type="industrial"] {
+    background-color: #e74c3c;
+}
+
+.district-cell[data-district-type="education"] {
+    background-color: #9b59b6;
+}
+
+.district-cell[data-district-type="eco"] {
+    background-color: #2ecc71;
+}
+
+.district-cell i {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+}
+
+.district-cell .district-name {
+    font-size: 0.7rem;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.empty-cell {
+    background-color: #eee;
+    border: 1px dashed #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-cell .create-here {
+    color: #aaa;
+    font-size: 1.2rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.empty-cell:hover .create-here {
+    opacity: 1;
+    color: var(--primary-color);
+}
+
+/* 統計グラフ */
+.stats-charts-container {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.stats-charts-container h2 {
+    font-size: 1.2rem;
+    color: var(--dark-color);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stats-charts {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.chart-tabs {
+    display: flex;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 20px;
+}
+
+.chart-tab {
+    padding: 10px 15px;
+    border: none;
+    background-color: transparent;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.chart-tab:hover {
+    background-color: #f9f9f9;
+}
+
+.chart-tab.active {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    background-color: #f0f7ff;
+}
+
+.chart-container {
+    width: 100%;
+    height: 300px;
+    position: relative;
+}
+
+.chart-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
 /* チュートリアルオーバーレイ */
 .tutorial-overlay {
     position: fixed;
@@ -642,6 +1312,28 @@ body {
 }
 
 /* モバイルレスポンシブ */
+@media (max-width: 1100px) {
+    .dashboard {
+        flex-direction: column;
+    }
+    
+    .city-stats {
+        width: 100%;
+        order: 2;
+    }
+    
+    .game-content {
+        order: 1;
+    }
+    
+    .districts-sidebar {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 20px;
+        order: 3;
+    }
+}
+
 @media (max-width: 768px) {
     .game-header {
         padding: 10px;
@@ -663,17 +1355,14 @@ body {
         display: block;
     }
     
-    .dashboard {
-        flex-direction: column;
+    .city-overview {
+        flex-wrap: wrap;
+        gap: 10px;
     }
     
-    .city-stats {
-        width: 100%;
-        order: 2;
-    }
-    
-    .game-content {
-        order: 1;
+    .overview-card {
+        min-width: calc(50% - 10px);
+        flex: 1 1 calc(50% - 10px);
     }
     
     .dashboard.mobile-active .city-stats {
@@ -684,11 +1373,6 @@ body {
         display: none;
     }
     
-    .city-overview {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
     .action-btn {
         width: calc(50% - 8px);
     }
@@ -697,5 +1381,31 @@ body {
         top: auto;
         bottom: 20px;
         right: 20px;
+    }
+    
+    .district-stats {
+        flex-direction: column;
+    }
+    
+    .district-actions {
+        flex-direction: column;
+    }
+    
+    .map-cell .district-name {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .action-btn {
+        width: 100%;
+    }
+    
+    .chart-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .chart-tab {
+        flex: 1 1 calc(50% - 10px);
     }
 }
