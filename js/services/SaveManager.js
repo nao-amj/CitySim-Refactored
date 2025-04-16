@@ -5,297 +5,218 @@
 
 import { GameConfig } from '../config/GameConfig.js';
 import { City } from '../models/City.js';
-import { TimeManager } from './TimeManager.js';
-import { EventEmitter } from './EventEmitter.js';
 
 export class SaveManager {
     /**
      * セーブマネージャーの初期化
      * @param {City} city - 都市モデル
-     * @param {TimeManager} timeManager - 時間管理クラス
+     * @param {TimeManager} timeManager - 時間管理クラス（オプション）
      */
-    constructor(city, timeManager) {
+    constructor(city, timeManager = null) {
         this.city = city;
         this.timeManager = timeManager;
-        this.autoSaveInterval = null;
-        this.events = new EventEmitter();
+        this.storageKey = GameConfig.STORAGE.SAVE_KEY;
+        this.autoSaveInterval = GameConfig.STORAGE.AUTO_SAVE_INTERVAL;
+        this.autoSaveTimerId = null;
         
-        // ストレージキー
-        this.saveKey = GameConfig.STORAGE.SAVE_KEY;
-    }
-    
-    /**
-     * 自動保存を開始する
-     */
-    startAutoSave() {
-        // 既存の自動保存をクリア
-        if (this.autoSaveInterval) {
-            clearInterval(this.autoSaveInterval);
-        }
-        
-        // 新しい自動保存インターバルを設定
-        this.autoSaveInterval = setInterval(() => {
-            this.saveGame('auto');
-        }, GameConfig.STORAGE.AUTO_SAVE_INTERVAL);
-        
-        // イベント発火
-        this.events.emit('autoSaveStarted', {
-            interval: GameConfig.STORAGE.AUTO_SAVE_INTERVAL
-        });
-    }
-    
-    /**
-     * 自動保存を停止する
-     */
-    stopAutoSave() {
-        if (this.autoSaveInterval) {
-            clearInterval(this.autoSaveInterval);
-            this.autoSaveInterval = null;
-            
-            // イベント発火
-            this.events.emit('autoSaveStopped', {
-                timestamp: new Date()
-            });
+        // 自動保存の開始
+        if (this.autoSaveInterval > 0) {
+            this.startAutoSave();
         }
     }
     
     /**
-     * ゲームを保存する
-     * @param {string} saveType - 保存タイプ（'manual', 'auto'）
+     * ゲームデータを保存する
+     * @param {string} saveType - 保存タイプ（'manual'または'auto'）
      * @returns {Object} - 保存結果
      */
     saveGame(saveType = 'manual') {
         try {
-            // 保存するデータを準備
+            // 都市データの取得
+            const cityData = this.city.serialize();
+            
+            // 時間マネージャーのデータを追加（存在する場合）
+            let timeData = null;
+            if (this.timeManager) {
+                timeData = {
+                    hour: this.timeManager.hour,
+                    day: this.timeManager.day,
+                    month: this.timeManager.month,
+                    year: this.timeManager.year,
+                    paused: this.timeManager.paused
+                };
+            }
+            
+            // 保存データの作成
             const saveData = {
-                city: this.city.serialize(),
-                timeManager: this.timeManager ? this.timeManager.serialize() : null,
-                saveType,
+                version: GameConfig.VERSION || '1.0.0',
                 timestamp: new Date().toISOString(),
-                version: '1.0.0' // データバージョン (将来の互換性のため)
+                city: cityData,
+                timeManager: timeData
             };
             
-            // データをストレージに保存
-            localStorage.setItem(this.saveKey, JSON.stringify(saveData));
+            // ローカルストレージに保存
+            localStorage.setItem(this.storageKey, JSON.stringify(saveData));
             
-            // イベント発火
-            this.events.emit('gameSaved', {
-                saveType,
-                timestamp: new Date()
-            });
+            console.log(`Game saved (${saveType}):`, saveData);
             
             return {
                 success: true,
-                message: `ゲームが${saveType === 'auto' ? '自動' : '手動'}で保存されました。`,
-                timestamp: new Date()
+                message: `ゲームデータを保存しました。(${saveType === 'manual' ? '手動' : '自動'})`,
+                timestamp: saveData.timestamp
             };
         } catch (error) {
-            console.error('ゲームの保存中にエラーが発生しました:', error);
-            
-            // イベント発火
-            this.events.emit('saveError', {
-                error,
-                saveType,
-                timestamp: new Date()
-            });
-            
+            console.error('Save error:', error);
             return {
                 success: false,
-                message: 'ゲームの保存中にエラーが発生しました。',
-                error
+                message: `保存に失敗しました: ${error.message}`
             };
         }
     }
     
     /**
-     * ゲームを読み込む
+     * ゲームデータを読み込む
      * @returns {Object} - 読み込み結果
      */
     loadGame() {
         try {
-            // ストレージからデータを取得
-            const savedData = localStorage.getItem(this.saveKey);
+            // ローカルストレージからデータを取得
+            const savedData = localStorage.getItem(this.storageKey);
             
             if (!savedData) {
                 return {
                     success: false,
-                    message: '保存されたゲームデータが見つかりませんでした。'
+                    message: '保存されたゲームデータが見つかりません。'
                 };
             }
             
             // JSONデータをパース
             const saveData = JSON.parse(savedData);
             
-            // バージョンの確認（将来的にデータ互換性の問題に対応するため）
-            if (saveData.version !== '1.0.0') {
-                console.warn('異なるバージョンのセーブデータを読み込みます。互換性の問題が発生する可能性があります。');
+            // バージョンチェック（必要に応じて）
+            const currentVersion = GameConfig.VERSION || '1.0.0';
+            if (saveData.version && saveData.version !== currentVersion) {
+                console.warn(`Save data version mismatch: ${saveData.version} vs ${currentVersion}`);
+                // 必要に応じてマイグレーション処理をここに追加
             }
             
-            // 復元した都市と時間マネージャーを返す
-            const restoredCity = City.deserialize(saveData.city);
-            const restoredTimeManager = saveData.timeManager 
-                ? TimeManager.deserialize(saveData.timeManager)
-                : null;
+            // 都市データを復元
+            const city = City.deserialize(saveData.city);
             
-            // イベント発火
-            this.events.emit('gameLoaded', {
-                timestamp: new Date(),
-                saveTimestamp: new Date(saveData.timestamp)
-            });
-            
+            // 結果を返す
             return {
                 success: true,
-                message: 'ゲームデータを正常に読み込みました。',
-                city: restoredCity,
-                timeManager: restoredTimeManager,
+                message: '保存されたゲームデータを読み込みました。',
+                city: city,
+                timeManager: saveData.timeManager,
                 timestamp: saveData.timestamp
             };
         } catch (error) {
-            console.error('ゲームデータの読み込み中にエラーが発生しました:', error);
-            
-            // イベント発火
-            this.events.emit('loadError', {
-                error,
-                timestamp: new Date()
-            });
-            
+            console.error('Load error:', error);
             return {
                 success: false,
-                message: 'ゲームデータの読み込み中にエラーが発生しました。',
-                error
+                message: `読み込みに失敗しました: ${error.message}`
             };
         }
     }
     
     /**
-     * 保存されたゲームがあるか確認する
-     * @returns {boolean} - 保存されたゲームがあるか
+     * 自動保存を開始する
      */
-    hasSavedGame() {
-        return !!localStorage.getItem(this.saveKey);
+    startAutoSave() {
+        // 既存のタイマーがあれば停止
+        if (this.autoSaveTimerId) {
+            this.stopAutoSave();
+        }
+        
+        // 新しいタイマーを設定
+        this.autoSaveTimerId = setInterval(() => {
+            this.saveGame('auto');
+        }, this.autoSaveInterval);
+        
+        console.log(`Auto-save started (interval: ${this.autoSaveInterval / 1000}s)`);
     }
     
     /**
-     * 保存データの情報を取得する（読み込まずに）
-     * @returns {Object|null} - 保存データの情報、またはnull
+     * 自動保存を停止する
      */
-    getSaveInfo() {
+    stopAutoSave() {
+        if (this.autoSaveTimerId) {
+            clearInterval(this.autoSaveTimerId);
+            this.autoSaveTimerId = null;
+            console.log('Auto-save stopped');
+        }
+    }
+    
+    /**
+     * 保存データをデータURLとしてエクスポートする
+     * @returns {Object} - エクスポート結果
+     */
+    exportSaveData() {
         try {
-            const savedData = localStorage.getItem(this.saveKey);
+            // 現在のセーブデータを取得
+            const saveData = localStorage.getItem(this.storageKey);
             
-            if (!savedData) {
-                return null;
+            if (!saveData) {
+                return {
+                    success: false,
+                    message: '保存されたゲームデータが見つかりません。'
+                };
             }
             
-            const saveData = JSON.parse(savedData);
+            // データURLの作成
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(saveData);
             
-            return {
-                timestamp: saveData.timestamp,
-                saveType: saveData.saveType,
-                version: saveData.version,
-                cityName: saveData.city.name,
-                year: saveData.city.year,
-                population: saveData.city.population
-            };
-        } catch (error) {
-            console.error('セーブデータ情報の取得中にエラーが発生しました:', error);
-            return null;
-        }
-    }
-    
-    /**
-     * 保存データを削除する
-     * @returns {Object} - 削除結果
-     */
-    deleteSave() {
-        try {
-            localStorage.removeItem(this.saveKey);
-            
-            // イベント発火
-            this.events.emit('saveDeleted', {
-                timestamp: new Date()
-            });
+            // ダウンロードリンクの作成と自動クリック
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `citysim-save-${Date.now()}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
             
             return {
                 success: true,
-                message: '保存データが削除されました。'
+                message: 'セーブデータをエクスポートしました。'
             };
         } catch (error) {
-            console.error('保存データの削除中にエラーが発生しました:', error);
-            
+            console.error('Export error:', error);
             return {
                 success: false,
-                message: '保存データの削除中にエラーが発生しました。',
-                error
+                message: `エクスポートに失敗しました: ${error.message}`
             };
         }
     }
     
     /**
-     * 保存されたデータをエクスポートする
-     * @returns {string} - エクスポートされたデータ文字列
-     */
-    exportSave() {
-        try {
-            const savedData = localStorage.getItem(this.saveKey);
-            
-            if (!savedData) {
-                throw new Error('保存されたゲームデータが見つかりませんでした。');
-            }
-            
-            // Base64エンコードしてエクスポート（簡易的な方法）
-            return btoa(savedData);
-        } catch (error) {
-            console.error('セーブデータのエクスポート中にエラーが発生しました:', error);
-            throw error;
-        }
-    }
-    
-    /**
-     * エクスポートされたデータをインポートする
-     * @param {string} exportedData - エクスポートされたデータ文字列
+     * エクスポートされたセーブデータをインポートする
+     * @param {string} fileContent - インポートするファイルの内容
      * @returns {Object} - インポート結果
      */
-    importSave(exportedData) {
+    importSaveData(fileContent) {
         try {
-            // Base64デコード
-            const savedData = atob(exportedData);
+            // JSONデータのパース
+            const saveData = JSON.parse(fileContent);
             
-            // JSONとして正しいか検証
-            const saveData = JSON.parse(savedData);
-            
-            // 必要なプロパティがあるか確認
-            if (!saveData.city || !saveData.timestamp || !saveData.version) {
-                throw new Error('無効なセーブデータです。');
+            // バージョンチェック（必要に応じて）
+            const currentVersion = GameConfig.VERSION || '1.0.0';
+            if (saveData.version && saveData.version !== currentVersion) {
+                console.warn(`Import data version mismatch: ${saveData.version} vs ${currentVersion}`);
+                // 必要に応じてマイグレーション処理をここに追加
             }
             
-            // ストレージに保存
-            localStorage.setItem(this.saveKey, savedData);
-            
-            // イベント発火
-            this.events.emit('saveImported', {
-                timestamp: new Date(),
-                saveTimestamp: new Date(saveData.timestamp)
-            });
+            // ローカルストレージに保存
+            localStorage.setItem(this.storageKey, fileContent);
             
             return {
                 success: true,
-                message: 'セーブデータを正常にインポートしました。',
-                timestamp: saveData.timestamp
+                message: 'セーブデータをインポートしました。ゲームを再読み込みしてください。'
             };
         } catch (error) {
-            console.error('セーブデータのインポート中にエラーが発生しました:', error);
-            
-            // イベント発火
-            this.events.emit('importError', {
-                error,
-                timestamp: new Date()
-            });
-            
+            console.error('Import error:', error);
             return {
                 success: false,
-                message: '無効なセーブデータです。正しくエクスポートされたデータを使用してください。',
-                error
+                message: `インポートに失敗しました: ${error.message}`
             };
         }
     }
