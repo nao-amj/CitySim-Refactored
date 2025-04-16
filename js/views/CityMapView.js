@@ -74,9 +74,9 @@ export class CityMapView {
      * スプライト画像をロードする
      */
     loadSprites() {
-        this.sprites.tiles.src = 'assets/tiles.png';
-        this.sprites.buildings.src = 'assets/buildings.png';
-        this.sprites.ui.src = 'assets/ui-elements.png';
+        this.sprites.tiles.src = 'assets/tiles.svg';
+        this.sprites.buildings.src = 'assets/buildings.svg';
+        this.sprites.ui.src = 'assets/ui-elements.svg';
         
         // すべての画像がロードされたらマップを描画
         Promise.all([
