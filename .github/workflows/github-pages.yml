@@ -26,8 +26,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
       - name: Setup Pages
         uses: actions/configure-pages@v4
+        
+      # .nojekyllファイルが存在することを確認
+      - name: Ensure .nojekyll file exists
+        run: |
+          if [ ! -f .nojekyll ]; then
+            touch .nojekyll
+          fi
+          
+      # 必要に応じてここにビルドステップを追加できます
+      # 例: npm installやnpm run buildなど
+      
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
