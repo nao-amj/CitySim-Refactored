@@ -11,6 +11,7 @@ import { UIController } from './controllers/UIController.js';
 import { EventSystem } from './events/EventSystem.js';
 import { TimeManager } from './services/TimeManager.js';
 import { SaveManager } from './services/SaveManager.js';
+import { TutorialController } from './controllers/TutorialController.js';
 
 // DOMが読み込まれた後にゲームを初期化
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,18 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // ゲームインスタンスの初期化
     initGame();
-    
-    // チュートリアルボタンのイベントリスナー修正
-    const closeButton = document.getElementById('close-tutorial');
-    if (closeButton) {
-        closeButton.addEventListener('click', function() {
-            const overlay = document.getElementById('tutorial-overlay');
-            if (overlay) {
-                overlay.style.display = 'none';
-                localStorage.setItem(GameConfig.TUTORIAL.STORAGE_KEY, 'true');
-            }
-        });
-    }
 });
 
 /**
@@ -57,6 +46,20 @@ function initGame() {
     const uiController = new UIController(city, timeManager);
     const gameController = new GameController(city, timeManager, eventSystem, uiController);
     
+    // チュートリアルコントローラーの初期化
+    const tutorialController = new TutorialController();
+    
+    // チュートリアルイベントリスナーの設定
+    tutorialController.events.on('tutorialCompleted', (data) => {
+        console.log('Tutorial completed', data);
+        // 必要に応じて追加のアクションを実行
+    });
+    
+    tutorialController.events.on('tutorialStepChanged', (data) => {
+        console.log('Tutorial step changed', data);
+        // 必要に応じて追加のアクションを実行
+    });
+    
     // 保存データがあれば読み込み
     const loadResult = gameController.loadGame(saveManager);
     
@@ -76,7 +79,8 @@ function initGame() {
             eventSystem,
             gameController,
             uiController,
-            saveManager
+            saveManager,
+            tutorialController
         };
     }
 }
