@@ -196,7 +196,7 @@ export class UIController {
     updateClock() {
         if (!this.elements.clock || !this.timeManager) return;
         
-        const { year, month, day, hour } = this.timeManager.getTime();
+        const { year, month, day, hour } = this.timeManager.getCurrentTime();
         this.elements.clock.textContent = `${year}年 ${month}月 ${day}日 ${hour}時`;
     }
     
