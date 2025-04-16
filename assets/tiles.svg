@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="384" height="128" viewBox="0 0 384 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- 空のタイル (0, 0) -->
+  <rect x="0" y="0" width="64" height="64" fill="#f0f0f0" stroke="#ddd" stroke-width="1" />
+  <rect x="16" y="16" width="32" height="32" fill="#e8e8e8" stroke="#ddd" stroke-width="1" />
+  
+  <!-- 住宅地区 (1, 0) -->
+  <rect x="64" y="0" width="64" height="64" fill="#3498db" stroke="#2980b9" stroke-width="1" />
+  <rect x="80" y="16" width="32" height="32" fill="#2980b9" stroke="#2980b9" stroke-width="1" />
+  <rect x="88" y="24" width="16" height="24" fill="#3498db" stroke="#2980b9" stroke-width="1" />
+  <polygon points="80,16 112,16 96,4" fill="#2980b9" stroke="#2980b9" stroke-width="1" />
+  
+  <!-- 商業地区 (2, 0) -->
+  <rect x="128" y="0" width="64" height="64" fill="#f39c12" stroke="#e67e22" stroke-width="1" />
+  <rect x="140" y="20" width="40" height="30" fill="#e67e22" stroke="#e67e22" stroke-width="1" />
+  <rect x="148" y="28" width="24" height="22" fill="#f39c12" stroke="#e67e22" stroke-width="1" />
+  <rect x="155" y="35" width="10" height="15" fill="#e67e22" stroke="#e67e22" stroke-width="1" />
+  
+  <!-- 工業地区 (3, 0) -->
+  <rect x="192" y="0" width="64" height="64" fill="#e74c3c" stroke="#c0392b" stroke-width="1" />
+  <rect x="202" y="30" width="15" height="25" fill="#c0392b" />
+  <rect x="225" y="20" width="20" height="35" fill="#c0392b" />
+  <polygon points="202,30 217,30 217,15 209,10 202,15" fill="#c0392b" />
+  <rect x="225" y="10" width="8" height="10" fill="#c0392b" />
+  
+  <!-- 教育地区 (4, 0) -->
+  <rect x="256" y="0" width="64" height="64" fill="#9b59b6" stroke="#8e44ad" stroke-width="1" />
+  <rect x="270" y="20" width="36" height="30" fill="#8e44ad" />
+  <rect x="280" y="50" width="16" height="4" fill="#8e44ad" />
+  <polygon points="270,20 306,20 288,8" fill="#8e44ad" />
+  <rect x="285" y="30" width="6" height="10" fill="#9b59b6" />
+  
+  <!-- 環境保全地区 (0, 1) -->
+  <rect x="0" y="64" width="64" height="64" fill="#2ecc71" stroke="#27ae60" stroke-width="1" />
+  <circle cx="20" cy="84" r="10" fill="#27ae60" />
+  <circle cx="44" cy="94" r="14" fill="#27ae60" />
+  <path d="M20,74 Q14,64 20,56 Q26,64 20,74" fill="#27ae60" />
+  <path d="M44,80 Q36,68 44,60 Q52,68 44,80" fill="#27ae60" />
+</svg>
