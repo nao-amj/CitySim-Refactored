@@ -21,14 +21,15 @@ export class TutorialController {
             overlay: document.getElementById('tutorial-overlay'),
             steps: document.getElementById('tutorial-steps'),
             closeButton: document.getElementById('close-tutorial'),
+            buttonsContainer: document.querySelector('.tutorial-buttons'),
             nextButton: null
         };
         
-        // 「次へ」ボタンの作成
-        this._createNextButton();
-        
         // 初期化
         this._initialize();
+        
+        // 「次へ」ボタンの作成
+        this._createNextButton();
     }
     
     /**
@@ -57,6 +58,11 @@ export class TutorialController {
      * @private
      */
     _createNextButton() {
+        if (!this.elements.buttonsContainer) {
+            console.error('Tutorial buttons container not found');
+            return;
+        }
+        
         const nextButton = document.createElement('button');
         nextButton.id = 'next-tutorial';
         nextButton.className = 'tutorial-btn next-btn';
@@ -65,9 +71,11 @@ export class TutorialController {
         
         nextButton.addEventListener('click', () => this.nextStep());
         
-        // 閉じるボタンの前に挿入
+        // ボタンコンテナの先頭に挿入
         if (this.elements.closeButton) {
-            this.elements.closeButton.parentNode.insertBefore(nextButton, this.elements.closeButton);
+            this.elements.buttonsContainer.insertBefore(nextButton, this.elements.closeButton);
+        } else {
+            this.elements.buttonsContainer.appendChild(nextButton);
         }
         
         this.elements.nextButton = nextButton;
@@ -89,6 +97,11 @@ export class TutorialController {
         // ボタンテキストを更新
         if (this.elements.closeButton) {
             this.elements.closeButton.textContent = 'スキップ';
+        }
+        
+        // 次へボタンを表示
+        if (this.elements.nextButton) {
+            this.elements.nextButton.style.display = 'inline-block';
         }
         
         // イベント発火
