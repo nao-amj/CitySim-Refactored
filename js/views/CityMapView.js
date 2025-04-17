@@ -14,6 +14,7 @@ export class CityMapView {
         this.city = city;
         this.mapSize = 10; // 10x10 のグリッド
         this.selectedPosition = null;
+        this.hoverPosition = null;
         this.tileSize = 64; // タイルサイズ（ピクセル）
         this.mapElement = null;
         this.canvas = null;
@@ -180,8 +181,16 @@ export class CityMapView {
                 return;
             }
             
-            // ホバーコールバック
+            // ホバー位置の更新
             if (tileX >= 0 && tileX < this.mapSize && tileY >= 0 && tileY < this.mapSize) {
+                // 前回と同じホバー位置なら処理をスキップ
+                if (this.hoverPosition && this.hoverPosition.x === tileX && this.hoverPosition.y === tileY) {
+                    return;
+                }
+                
+                this.hoverPosition = { x: tileX, y: tileY };
+                
+                // ホバーコールバック
                 if (this.onTileHover) {
                     const district = this._getDistrictAt(tileX, tileY);
                     this.onTileHover(tileX, tileY, district);
@@ -189,8 +198,25 @@ export class CityMapView {
                 
                 // カーソルスタイルの変更
                 this.canvas.style.cursor = 'pointer';
+                
+                // ホバーを反映して再描画
+                this.render();
             } else {
+                // マップ外にマウスが移動した場合
+                if (this.hoverPosition !== null) {
+                    this.hoverPosition = null;
+                    this.canvas.style.cursor = 'default';
+                    this.render();
+                }
+            }
+        });
+        
+        // マウス離脱イベント（ホバー状態の解除）
+        this.canvas.addEventListener('mouseleave', () => {
+            if (this.hoverPosition !== null) {
+                this.hoverPosition = null;
                 this.canvas.style.cursor = 'default';
+                this.render();
             }
         });
         
@@ -239,22 +265,31 @@ export class CityMapView {
         });
         
         // ズームボタン
-        document.getElementById('zoom-in').addEventListener('click', () => {
-            this.scale = Math.min(this.maxScale, this.scale * 1.2);
-            this.render();
-        });
+        const zoomInBtn = document.getElementById('zoom-in');
+        if (zoomInBtn) {
+            zoomInBtn.addEventListener('click', () => {
+                this.scale = Math.min(this.maxScale, this.scale * 1.2);
+                this.render();
+            });
+        }
         
-        document.getElementById('zoom-out').addEventListener('click', () => {
-            this.scale = Math.max(this.minScale, this.scale / 1.2);
-            this.render();
-        });
+        const zoomOutBtn = document.getElementById('zoom-out');
+        if (zoomOutBtn) {
+            zoomOutBtn.addEventListener('click', () => {
+                this.scale = Math.max(this.minScale, this.scale / 1.2);
+                this.render();
+            });
+        }
         
         // リセットボタン
-        document.getElementById('reset-view').addEventListener('click', () => {
-            this.scale = 1.0;
-            this.mapOffset = { x: 0, y: 0 };
-            this.render();
-        });
+        const resetViewBtn = document.getElementById('reset-view');
+        if (resetViewBtn) {
+            resetViewBtn.addEventListener('click', () => {
+                this.scale = 1.0;
+                this.mapOffset = { x: 0, y: 0 };
+                this.render();
+            });
+        }
     }
     
     /**
@@ -265,6 +300,7 @@ export class CityMapView {
      * @private
      */
     _getDistrictAt(x, y) {
+        if (!this.city || !this.city.districts) return null;
         return this.city.districts.find(d => d.position.x === x && d.position.y === y) || null;
     }
     
@@ -272,6 +308,8 @@ export class CityMapView {
      * マップを描画する
      */
     render() {
+        if (!this.ctx) return;
+        
         // キャンバスをクリア
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
@@ -313,6 +351,12 @@ export class CityMapView {
                         y * this.tileSize + this.tileSize/2 - 12,
                         24, 24
                     );
+                }
+                
+                // ホバー表示
+                if (this.hoverPosition && this.hoverPosition.x === x && this.hoverPosition.y === y &&
+                    (!this.selectedPosition || this.selectedPosition.x !== x || this.selectedPosition.y !== y)) {
+                    this._drawHover(x, y);
                 }
                 
                 // 選択表示
@@ -541,6 +585,40 @@ export class CityMapView {
     }
     
     /**
+     * ホバー表示を描画する
+     * @param {number} x - X座標
+     * @param {number} y - Y座標
+     * @private
+     */
+    _drawHover(x, y) {
+        const padding = 2;
+        
+        // スプライトがロードされていない場合のフォールバック
+        if (!this.sprites.ui.complete) {
+            this.ctx.strokeStyle = '#aaaaff';
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(
+                x * this.tileSize + padding, 
+                y * this.tileSize + padding, 
+                this.tileSize - padding * 2, 
+                this.tileSize - padding * 2
+            );
+            return;
+        }
+        
+        // ホバー表示スプライトを描画
+        this._drawSprite(
+            this.sprites.ui,
+            this.uiSprites.highlight.x,
+            this.uiSprites.highlight.y,
+            x * this.tileSize,
+            y * this.tileSize,
+            this.tileSize,
+            this.tileSize
+        );
+    }
+    
+    /**
      * スプライトを描画する
      * @param {Image} spriteSheet - スプライトシート
      * @param {number} sx - スプライトX座標
@@ -589,6 +667,8 @@ export class CityMapView {
      * @param {number} height - 新しい高さ
      */
     resize(width, height) {
+        if (!this.canvas) return;
+        
         this.canvas.width = width;
         this.canvas.height = height;
         this.render();
