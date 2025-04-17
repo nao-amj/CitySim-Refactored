@@ -197,6 +197,14 @@ export class TimeManager {
     }
     
     /**
+     * 現在の時間を取得する (getTimeの互換性用エイリアス)
+     * @returns {Object} - 現在の時間オブジェクト
+     */
+    getTime() {
+        return this.getCurrentTime();
+    }
+    
+    /**
      * フォーマットされた時間文字列を取得する
      * @returns {string} - フォーマットされた時間
      */
