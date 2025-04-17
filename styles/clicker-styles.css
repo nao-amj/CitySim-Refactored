@@ -1,0 +1,562 @@
+/* CitySim - クリッカーモード専用スタイル */
+
+.clicker-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.clicker-header {
+    background-color: var(--dark-color);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
+.clicker-header h2 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.3rem;
+}
+
+.clicker-header p {
+    margin: 0 0 0 20px;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    flex-grow: 1;
+}
+
+.clicker-exit-btn {
+    background-color: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: transform 0.2s, color 0.2s;
+}
+
+.clicker-exit-btn:hover {
+    color: var(--danger-color);
+    transform: scale(1.1);
+}
+
+.clicker-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow-y: auto;
+    gap: 20px;
+    max-height: calc(100% - 70px);
+}
+
+.clicker-main {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.clicker-target-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 250px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5) inset;
+    position: relative;
+    overflow: hidden;
+}
+
+.clicker-target {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--primary-color) 0%, var(--dark-color) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), 0 0 40px rgba(52, 152, 219, 0.6);
+    transition: transform 0.1s, box-shadow 0.1s;
+    position: relative;
+}
+
+.clicker-target i {
+    font-size: 60px;
+    color: white;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+}
+
+.clicker-target.clicked {
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 20px rgba(52, 152, 219, 0.4);
+}
+
+.click-effect {
+    position: absolute;
+    pointer-events: none;
+    color: #ffeb3b;
+    font-weight: bold;
+    animation: float-up 1.5s forwards;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+    font-size: 1.2rem;
+    z-index: 5;
+}
+
+@keyframes float-up {
+    0% {
+        opacity: 0;
+        transform: translateY(10px) scale(0.8);
+    }
+    20% {
+        opacity: 1;
+        transform: translateY(0) scale(1.2);
+    }
+    80% {
+        opacity: 1;
+        transform: translateY(-40px) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-60px) scale(0.8);
+    }
+}
+
+.clicker-target-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.target-particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.7);
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.clicker-stats {
+    flex: 1;
+    min-width: 250px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    align-content: start;
+}
+
+.clicker-stat {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(5px);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.clicker-stat:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.clicker-stat i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.clicker-stat span {
+    color: white;
+    font-size: 1.1rem;
+}
+
+.clicker-stat::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    opacity: 0.7;
+}
+
+.clicker-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.clicker-section {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    backdrop-filter: blur(5px);
+}
+
+.clicker-section h3 {
+    color: white;
+    margin: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.clicker-buildings, 
+.clicker-upgrades, 
+.clicker-achievements {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    max-height: 400px;
+    padding-right: 10px;
+}
+
+.clicker-item {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.clicker-item:hover:not(.purchased):not(.unlocked) {
+    background-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-3px);
+}
+
+.clicker-item.purchased,
+.clicker-item.unlocked {
+    background-color: rgba(46, 204, 113, 0.15);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.clicker-item-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.clicker-item-icon i {
+    font-size: 1.3rem;
+    color: white;
+}
+
+.clicker-item-info {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.clicker-item-name {
+    color: white;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.purchased-tag,
+.unlocked-tag {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    font-weight: normal;
+}
+
+.clicker-item-desc {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.clicker-item-effect {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.clicker-item-effect span {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--accent-color);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.clicker-item-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background-color 0.2s, transform 0.2s;
+    flex-shrink: 0;
+}
+
+.clicker-item-btn:hover {
+    background-color: var(--dark-color);
+    transform: scale(1.05);
+}
+
+.clicker-item-cost {
+    margin-top: 5px;
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.clicker-item-count {
+    color: var(--accent-color);
+    font-size: 0.9rem;
+}
+
+.clicker-item-progress {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    transition: width 0.3s ease-out;
+}
+
+.clicker-item-progress span {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    text-align: right;
+}
+
+.clicker-empty {
+    text-align: center;
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* 拡張機能: 特殊エフェクト用スタイル */
+.particles-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2001;
+}
+
+.achievement-animation {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 0 50px rgba(46, 204, 113, 0.6);
+    z-index: 2100;
+    animation: achievementReveal 4s forwards;
+}
+
+@keyframes achievementReveal {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    10% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+    20% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    80% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+}
+
+.achievement-animation .trophy {
+    font-size: 3rem;
+    color: gold;
+    margin-bottom: 15px;
+    animation: trophyGlow 2s infinite;
+}
+
+@keyframes trophyGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.7));
+    }
+    50% {
+        filter: drop-shadow(0 0 20px rgba(255, 215, 0, 1));
+    }
+}
+
+.achievement-animation h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.achievement-animation p {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 15px;
+}
+
+.achievement-bonus {
+    display: inline-block;
+    background-color: rgba(46, 204, 113, 0.3);
+    border: 1px solid rgba(46, 204, 113, 0.5);
+    padding: 5px 15px;
+    border-radius: 20px;
+    color: var(--secondary-color);
+}
+
+/* クリック効果の追加スタイル */
+.click-particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: particle-fade 1s forwards;
+}
+
+@keyframes particle-fade {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0);
+    }
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .clicker-main {
+        flex-direction: column;
+    }
+    
+    .clicker-target-container {
+        min-height: 200px;
+    }
+    
+    .clicker-sections {
+        grid-template-columns: 1fr;
+    }
+    
+    .clicker-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px;
+    }
+    
+    .clicker-header p {
+        margin: 5px 0 0 0;
+    }
+    
+    .clicker-exit-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    
+    .clicker-target {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .clicker-target i {
+        font-size: 40px;
+    }
+    
+    .clicker-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .clicker-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .clicker-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .clicker-item-info {
+        width: 100%;
+        align-items: center;
+    }
+    
+    .clicker-item-btn {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
