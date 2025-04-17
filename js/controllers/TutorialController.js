@@ -21,15 +21,11 @@ export class TutorialController {
             overlay: document.getElementById('tutorial-overlay'),
             steps: document.getElementById('tutorial-steps'),
             closeButton: document.getElementById('close-tutorial'),
-            buttonsContainer: document.querySelector('.tutorial-buttons'),
-            nextButton: null
+            buttonsContainer: document.querySelector('.tutorial-buttons')
         };
         
         // 初期化
         this._initialize();
-        
-        // 「次へ」ボタンの作成
-        this._createNextButton();
     }
     
     /**
@@ -44,6 +40,9 @@ export class TutorialController {
         if (this.elements.closeButton) {
             this.elements.closeButton.addEventListener('click', () => this.hideTutorial());
         }
+        
+        // 「次へ」ボタンの作成
+        this._createNextButton();
         
         // 初回起動時は自動的にチュートリアルを表示
         if (!this.tutorialShown) {
@@ -71,13 +70,14 @@ export class TutorialController {
         
         nextButton.addEventListener('click', () => this.nextStep());
         
-        // ボタンコンテナの先頭に挿入
-        if (this.elements.closeButton) {
+        // ボタンコンテナの先頭に挿入（クローズボタンがあれば直前に）
+        if (this.elements.closeButton && this.elements.closeButton.parentNode === this.elements.buttonsContainer) {
             this.elements.buttonsContainer.insertBefore(nextButton, this.elements.closeButton);
         } else {
             this.elements.buttonsContainer.appendChild(nextButton);
         }
         
+        // 参照を保存
         this.elements.nextButton = nextButton;
     }
     
