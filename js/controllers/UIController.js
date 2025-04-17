@@ -219,6 +219,10 @@ export class UIController {
                     <i class="fas fa-shield-alt"></i>
                     <span>安全政策</span>
                 </button>
+                <button class="action-btn" data-action="clicker_mode">
+                    <i class="fas fa-coins"></i>
+                    <span>クリッカーモード</span>
+                </button>
             `;
             
             // アクションボタンのイベントリスナーを設定
