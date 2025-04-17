@@ -1,9 +1,9 @@
 /**
  * CitySim - TutorialController クラス
- * チュートリアルの表示と管理を担当
+ * ゲームチュートリアルの制御を担当
  */
 
-import { GameConfig } from '../config/GameConfig.js';
+import { GameConfig, GameText } from '../config/GameConfig.js';
 import { EventEmitter } from '../services/EventEmitter.js';
 
 export class TutorialController {
@@ -11,183 +11,257 @@ export class TutorialController {
      * チュートリアルコントローラーの初期化
      */
     constructor() {
-        this.currentStep = 0;
-        this.totalSteps = GameConfig.TUTORIAL.STEPS.length;
-        this.tutorialShown = false;
         this.events = new EventEmitter();
+        this.currentStep = 0;
+        this.steps = GameConfig.TUTORIAL.STEPS;
+        this.isActive = false;
         
-        // DOM要素
-        this.elements = {
-            overlay: document.getElementById('tutorial-overlay'),
-            steps: document.getElementById('tutorial-steps'),
-            closeButton: document.getElementById('close-tutorial'),
-            buttonsContainer: document.querySelector('.tutorial-buttons')
-        };
+        // DOM要素への参照
+        this.tutorialOverlay = document.getElementById('tutorial-overlay');
+        this.tutorialSteps = document.getElementById('tutorial-steps');
+        this.tutorialButtons = document.querySelector('.tutorial-buttons');
         
-        // 初期化
-        this._initialize();
+        this._init();
     }
     
     /**
      * 初期化処理
      * @private
      */
-    _initialize() {
-        // チュートリアルが既に表示されたかどうかをチェック
-        this.tutorialShown = localStorage.getItem(GameConfig.TUTORIAL.STORAGE_KEY) === 'true';
+    _init() {
+        // ローカルストレージからチュートリアル表示済みかをチェック
+        const isTutorialCompleted = localStorage.getItem(GameConfig.TUTORIAL.STORAGE_KEY) === 'true';
         
-        // 閉じるボタンのイベントリスナー
-        if (this.elements.closeButton) {
-            this.elements.closeButton.addEventListener('click', () => this.hideTutorial());
+        if (!isTutorialCompleted) {
+            this._showTutorial();
         }
         
-        // 「次へ」ボタンの作成
-        this._createNextButton();
-        
-        // 初回起動時は自動的にチュートリアルを表示
-        if (!this.tutorialShown) {
-            this.showTutorial();
-        } else {
-            this.hideTutorial(false); // イベント発火なし
+        // チュートリアルスキップボタンのイベントリスナー
+        const closeButton = document.getElementById('close-tutorial');
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                this._completeTutorial();
+            });
         }
     }
     
     /**
-     * 「次へ」ボタンを作成
+     * チュートリアルを表示する
      * @private
      */
-    _createNextButton() {
-        if (!this.elements.buttonsContainer) {
-            console.error('Tutorial buttons container not found');
-            return;
-        }
+    _showTutorial() {
+        if (!this.tutorialOverlay || !this.tutorialSteps) return;
         
-        const nextButton = document.createElement('button');
-        nextButton.id = 'next-tutorial';
-        nextButton.className = 'tutorial-btn next-btn';
-        nextButton.textContent = '次へ';
-        nextButton.style.marginRight = '10px';
-        
-        nextButton.addEventListener('click', () => this.nextStep());
-        
-        // ボタンコンテナの先頭に挿入（クローズボタンがあれば直前に）
-        if (this.elements.closeButton && this.elements.closeButton.parentNode === this.elements.buttonsContainer) {
-            this.elements.buttonsContainer.insertBefore(nextButton, this.elements.closeButton);
-        } else {
-            this.elements.buttonsContainer.appendChild(nextButton);
-        }
-        
-        // 参照を保存
-        this.elements.nextButton = nextButton;
-    }
-    
-    /**
-     * チュートリアルを表示
-     */
-    showTutorial() {
-        if (!this.elements.overlay) return;
-        
-        // 最初のステップを表示
+        this.isActive = true;
         this.currentStep = 0;
-        this._renderCurrentStep();
+        
+        // ステップを表示
+        this._renderSteps();
+        
+        // ボタンを設定
+        this._renderButtons();
         
         // オーバーレイを表示
-        this.elements.overlay.style.display = 'flex';
-        
-        // ボタンテキストを更新
-        if (this.elements.closeButton) {
-            this.elements.closeButton.textContent = 'スキップ';
-        }
-        
-        // 次へボタンを表示
-        if (this.elements.nextButton) {
-            this.elements.nextButton.style.display = 'inline-block';
-        }
+        this.tutorialOverlay.style.display = 'flex';
         
         // イベント発火
         this.events.emit('tutorialStarted', {
-            timestamp: new Date()
+            step: this.currentStep,
+            totalSteps: this.steps.length
         });
     }
     
     /**
-     * チュートリアルを非表示
-     * @param {boolean} emitEvent - イベントを発火するかどうか
+     * チュートリアルステップを描画する
+     * @private
      */
-    hideTutorial(emitEvent = true) {
-        if (!this.elements.overlay) return;
+    _renderSteps() {
+        if (!this.tutorialSteps) return;
         
-        // オーバーレイを非表示
-        this.elements.overlay.style.display = 'none';
+        this.tutorialSteps.innerHTML = '';
         
-        // チュートリアル表示済みフラグを保存
-        localStorage.setItem(GameConfig.TUTORIAL.STORAGE_KEY, 'true');
-        this.tutorialShown = true;
+        // 現在のステップを強調表示
+        const currentStep = this.steps[this.currentStep];
         
-        // イベント発火
-        if (emitEvent) {
-            this.events.emit('tutorialCompleted', {
-                timestamp: new Date()
-            });
+        // ステップの描画
+        for (let i = 0; i < this.steps.length; i++) {
+            const step = this.steps[i];
+            const stepElement = document.createElement('div');
+            stepElement.className = `tutorial-step ${i === this.currentStep ? 'active' : i < this.currentStep ? 'completed' : ''}`;
+            
+            stepElement.innerHTML = `
+                <div class="step-number">${i + 1}</div>
+                <div class="step-icon"><i class="fas fa-${step.icon}"></i></div>
+                <div class="step-content">
+                    <h3>${step.title}</h3>
+                    <p>${i === this.currentStep ? step.message : ''}</p>
+                </div>
+            `;
+            
+            this.tutorialSteps.appendChild(stepElement);
         }
+    }
+    
+    /**
+     * チュートリアルボタンを描画する
+     * @private
+     */
+    _renderButtons() {
+        if (!this.tutorialButtons) return;
+        
+        this.tutorialButtons.innerHTML = '';
+        
+        // スキップボタン
+        const skipButton = document.createElement('button');
+        skipButton.id = 'close-tutorial';
+        skipButton.className = 'tutorial-btn tutorial-btn-secondary';
+        skipButton.textContent = 'スキップ';
+        skipButton.addEventListener('click', () => {
+            this._completeTutorial();
+        });
+        
+        // 前へボタン（最初のステップ以外で表示）
+        if (this.currentStep > 0) {
+            const prevButton = document.createElement('button');
+            prevButton.id = 'prev-tutorial';
+            prevButton.className = 'tutorial-btn';
+            prevButton.textContent = '前へ';
+            prevButton.addEventListener('click', () => {
+                this._prevStep();
+            });
+            this.tutorialButtons.appendChild(prevButton);
+        }
+        
+        // 次へボタン
+        if (this.currentStep < this.steps.length - 1) {
+            const nextButton = document.createElement('button');
+            nextButton.id = 'next-tutorial';
+            nextButton.className = 'tutorial-btn tutorial-btn-primary';
+            nextButton.textContent = '次へ';
+            nextButton.addEventListener('click', () => {
+                this._nextStep();
+            });
+            this.tutorialButtons.appendChild(nextButton);
+        } else {
+            // 最後のステップでは「完了」ボタン
+            const doneButton = document.createElement('button');
+            doneButton.id = 'complete-tutorial';
+            doneButton.className = 'tutorial-btn tutorial-btn-primary';
+            doneButton.textContent = '完了';
+            doneButton.addEventListener('click', () => {
+                this._completeTutorial();
+            });
+            this.tutorialButtons.appendChild(doneButton);
+        }
+        
+        this.tutorialButtons.appendChild(skipButton);
     }
     
     /**
      * 次のステップに進む
+     * @private
      */
-    nextStep() {
-        if (this.currentStep < this.totalSteps - 1) {
+    _nextStep() {
+        if (this.currentStep < this.steps.length - 1) {
             this.currentStep++;
-            this._renderCurrentStep();
-            
-            // 最後のステップならボタンテキストを変更
-            if (this.currentStep === this.totalSteps - 1) {
-                if (this.elements.nextButton) {
-                    this.elements.nextButton.style.display = 'none';
-                }
-                if (this.elements.closeButton) {
-                    this.elements.closeButton.textContent = '始める';
-                }
-            }
+            this._renderSteps();
+            this._renderButtons();
             
             // イベント発火
             this.events.emit('tutorialStepChanged', {
-                currentStep: this.currentStep,
-                totalSteps: this.totalSteps
+                step: this.currentStep,
+                totalSteps: this.steps.length,
+                direction: 'next'
             });
-        } else {
-            // 最後のステップから進む場合はチュートリアルを閉じる
-            this.hideTutorial();
         }
     }
     
     /**
-     * 現在のステップを表示
+     * 前のステップに戻る
      * @private
      */
-    _renderCurrentStep() {
-        if (!this.elements.steps) return;
+    _prevStep() {
+        if (this.currentStep > 0) {
+            this.currentStep--;
+            this._renderSteps();
+            this._renderButtons();
+            
+            // イベント発火
+            this.events.emit('tutorialStepChanged', {
+                step: this.currentStep,
+                totalSteps: this.steps.length,
+                direction: 'prev'
+            });
+        }
+    }
+    
+    /**
+     * チュートリアルを完了する
+     * @private
+     */
+    _completeTutorial() {
+        if (!this.tutorialOverlay) return;
         
-        // ステップコンテナをクリア
-        this.elements.steps.innerHTML = '';
+        this.isActive = false;
         
-        // ステップ番号を表示
-        const stepCounter = document.createElement('div');
-        stepCounter.className = 'step-counter';
-        stepCounter.textContent = `ステップ ${this.currentStep + 1}/${this.totalSteps}`;
-        this.elements.steps.appendChild(stepCounter);
+        // チュートリアルオーバーレイを非表示
+        this.tutorialOverlay.style.display = 'none';
         
-        // 現在のステップを取得
-        const step = GameConfig.TUTORIAL.STEPS[this.currentStep];
+        // ローカルストレージに完了を記録
+        localStorage.setItem(GameConfig.TUTORIAL.STORAGE_KEY, 'true');
         
-        // ステップを表示
-        const stepElement = document.createElement('div');
-        stepElement.className = 'tutorial-step';
-        stepElement.innerHTML = `
-            <h3><i class="fas fa-${step.icon}"></i> ${step.title}</h3>
-            <p>${step.message}</p>
-        `;
+        // イベント発火
+        this.events.emit('tutorialCompleted', {
+            completedStep: this.currentStep,
+            totalSteps: this.steps.length
+        });
+    }
+    
+    /**
+     * チュートリアルをリセットする（開発用）
+     */
+    resetTutorial() {
+        localStorage.removeItem(GameConfig.TUTORIAL.STORAGE_KEY);
+        this.currentStep = 0;
+        this._showTutorial();
         
-        this.elements.steps.appendChild(stepElement);
+        return {
+            success: true,
+            message: 'チュートリアルがリセットされました。'
+        };
+    }
+    
+    /**
+     * 特定のステップを表示する
+     * @param {number} stepIndex - 表示するステップのインデックス
+     */
+    showStep(stepIndex) {
+        if (stepIndex >= 0 && stepIndex < this.steps.length) {
+            this.currentStep = stepIndex;
+            
+            if (!this.isActive) {
+                this._showTutorial();
+            } else {
+                this._renderSteps();
+                this._renderButtons();
+            }
+            
+            // イベント発火
+            this.events.emit('tutorialStepChanged', {
+                step: this.currentStep,
+                totalSteps: this.steps.length,
+                direction: 'jump'
+            });
+            
+            return {
+                success: true,
+                message: `チュートリアルステップ ${stepIndex + 1} を表示しています。`
+            };
+        }
+        
+        return {
+            success: false,
+            message: `ステップインデックス ${stepIndex} は無効です。有効な範囲: 0-${this.steps.length - 1}`
+        };
     }
 }
