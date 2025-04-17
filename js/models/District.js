@@ -4,6 +4,7 @@
  */
 
 import { GameConfig } from '../config/GameConfig.js';
+import { DistrictsConfig } from '../config/DistrictsConfig.js';
 import { EventEmitter } from '../services/EventEmitter.js';
 
 export class District {
@@ -77,7 +78,7 @@ export class District {
      */
     upgrade() {
         // 最大レベルチェック
-        if (this.level >= GameConfig.DISTRICTS.MAX_LEVEL) {
+        if (this.level >= DistrictsConfig.MAX_LEVEL) {
             return {
                 success: false,
                 message: 'この地区はすでに最大レベルです。'
@@ -85,9 +86,9 @@ export class District {
         }
         
         // アップグレード条件チェック
-        const levelConfig = GameConfig.DISTRICTS.UPGRADE_REQUIREMENTS[this.level];
+        const levelConfig = DistrictsConfig.UPGRADE_REQUIREMENTS[this.level];
         if (levelConfig) {
-            // 条件チェックを実装（必要に応じて）
+            // 条件チェックは呼び出し元で行われる
         }
         
         // レベルを上げる
@@ -218,6 +219,18 @@ export class District {
      * @private
      */
     _getDefaultEffects() {
+        // DistrictsConfigから該当する地区タイプの効果を取得
+        const districtType = DistrictsConfig.TYPES[this.type.toUpperCase()];
+        if (districtType && districtType.effects) {
+            // レベルに応じてスケール
+            const effects = { ...districtType.effects };
+            Object.keys(effects).forEach(key => {
+                effects[key] = effects[key] * this.level;
+            });
+            return effects;
+        }
+        
+        // フォールバック（設定がない場合）
         switch (this.type) {
             case 'residential':
                 return {
@@ -282,6 +295,13 @@ export class District {
      * @private
      */
     _isCompatibleSpecialization(specialization) {
+        // DistrictsConfigから専門化を確認
+        const specializations = DistrictsConfig.SPECIALIZATIONS[this.type];
+        if (specializations) {
+            return specializations.hasOwnProperty(specialization);
+        }
+        
+        // フォールバック
         const compatibilityMap = {
             residential: ['luxury', 'affordable', 'mixed'],
             commercial: ['tourism', 'shopping', 'office'],
@@ -372,7 +392,7 @@ export class District {
         }
         
         // 専門化タイプに応じた効果を返す
-        const specializationConfig = GameConfig.DISTRICTS.SPECIALIZATIONS[this.type]?.[this.specialization];
+        const specializationConfig = DistrictsConfig.SPECIALIZATIONS[this.type]?.[this.specialization];
         return specializationConfig?.effects || {};
     }
     
