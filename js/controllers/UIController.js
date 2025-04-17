@@ -93,6 +93,7 @@ export class UIController {
         
         // CityMapViewの初期化
         if (this.elements.cityMap) {
+            this.elements.cityMap.style.display = 'block';
             this.cityMapView = new CityMapView(this.elements.cityMap, this.city);
             this.cityMapView.setTileClickCallback((x, y, district) => {
                 if (district) {
@@ -110,7 +111,154 @@ export class UIController {
      * @private
      */
     _initializeActionButtons() {
-        // ここに実装を追加
+        // 建設タブのアクションボタン
+        if (this.elements.buildActions) {
+            this.elements.buildActions.innerHTML = `
+                <button class="action-btn" data-action="build_house">
+                    <i class="fas fa-home"></i>
+                    <span>住宅を建設</span>
+                    <span class="action-cost">¥1,000</span>
+                </button>
+                <button class="action-btn" data-action="build_factory">
+                    <i class="fas fa-industry"></i>
+                    <span>工場を建設</span>
+                    <span class="action-cost">¥2,500</span>
+                </button>
+                <button class="action-btn" data-action="build_road">
+                    <i class="fas fa-road"></i>
+                    <span>道路を建設</span>
+                    <span class="action-cost">¥500</span>
+                </button>
+                <button class="action-btn" data-action="build_park">
+                    <i class="fas fa-tree"></i>
+                    <span>公園を建設</span>
+                    <span class="action-cost">¥1,500</span>
+                </button>
+                <button class="action-btn" data-action="build_school">
+                    <i class="fas fa-school"></i>
+                    <span>学校を建設</span>
+                    <span class="action-cost">¥3,000</span>
+                </button>
+            `;
+            
+            // アクションボタンのイベントリスナーを設定
+            this.elements.buildActions.querySelectorAll('.action-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.getAttribute('data-action');
+                    this.events.emit('actionSelected', { action });
+                });
+            });
+        }
+        
+        // 経済タブのアクションボタン
+        if (this.elements.economyActions) {
+            this.elements.economyActions.innerHTML = `
+                <div class="tax-slider-container">
+                    <label for="tax-rate-slider">税率: <span id="tax-rate-value">10%</span></label>
+                    <input type="range" id="tax-rate-slider" min="0" max="30" value="10" step="1">
+                </div>
+                <button class="action-btn" data-action="set_tax_rate">
+                    <i class="fas fa-percentage"></i>
+                    <span>税率を設定</span>
+                </button>
+                <button class="action-btn" data-action="request_loan">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <span>ローンを申請</span>
+                </button>
+                <button class="action-btn" data-action="show_finances">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>財務状況を表示</span>
+                </button>
+            `;
+            
+            // 税率スライダー
+            const taxSlider = document.getElementById('tax-rate-slider');
+            const taxValue = document.getElementById('tax-rate-value');
+            
+            if (taxSlider && taxValue) {
+                taxSlider.value = this.city.taxRate;
+                taxValue.textContent = `${this.city.taxRate}%`;
+                
+                taxSlider.addEventListener('input', () => {
+                    taxValue.textContent = `${taxSlider.value}%`;
+                });
+            }
+            
+            // アクションボタンのイベントリスナーを設定
+            this.elements.economyActions.querySelectorAll('.action-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.getAttribute('data-action');
+                    if (action === 'set_tax_rate' && taxSlider) {
+                        this.events.emit('actionSelected', { 
+                            action,
+                            params: { taxRate: parseInt(taxSlider.value, 10) }
+                        });
+                    } else {
+                        this.events.emit('actionSelected', { action });
+                    }
+                });
+            });
+        }
+        
+        // 政策タブのアクションボタン
+        if (this.elements.policyActions) {
+            this.elements.policyActions.innerHTML = `
+                <button class="action-btn primary-action" data-action="next_year">
+                    <i class="fas fa-forward"></i>
+                    <span>次の年へ進む</span>
+                </button>
+                <button class="action-btn" data-action="education_policy">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>教育政策</span>
+                </button>
+                <button class="action-btn" data-action="environment_policy">
+                    <i class="fas fa-leaf"></i>
+                    <span>環境政策</span>
+                </button>
+                <button class="action-btn" data-action="safety_policy">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>安全政策</span>
+                </button>
+            `;
+            
+            // アクションボタンのイベントリスナーを設定
+            this.elements.policyActions.querySelectorAll('.action-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.getAttribute('data-action');
+                    this.events.emit('actionSelected', { action });
+                });
+            });
+        }
+        
+        // 地区タブのアクションボタン
+        if (this.elements.districtsActions) {
+            this.elements.districtsActions.innerHTML = `
+                <button class="action-btn primary-action" data-action="show_city_map">
+                    <i class="fas fa-map"></i>
+                    <span>都市マップを表示</span>
+                </button>
+                <button class="action-btn" data-action="create_district">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>新しい地区を作成</span>
+                </button>
+                <button class="action-btn" data-action="manage_districts">
+                    <i class="fas fa-cogs"></i>
+                    <span>地区を管理</span>
+                </button>
+            `;
+            
+            // アクションボタンのイベントリスナーを設定
+            this.elements.districtsActions.querySelectorAll('.action-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.getAttribute('data-action');
+                    if (action === 'show_city_map') {
+                        this._toggleCityMap();
+                    } else {
+                        this.events.emit('actionSelected', { action });
+                    }
+                });
+            });
+        }
     }
     
     /**
@@ -126,7 +274,31 @@ export class UIController {
             });
         });
         
-        // その他のイベントリスナー
+        // チャートタブ切り替え
+        if (this.elements.chartTabs) {
+            this.elements.chartTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const chartType = tab.getAttribute('data-chart');
+                    this._switchChartTab(chartType);
+                });
+            });
+        }
+        
+        // 統計グラフ表示ボタン
+        const showStatsChartsBtn = document.getElementById('show-stats-charts');
+        if (showStatsChartsBtn) {
+            showStatsChartsBtn.addEventListener('click', () => {
+                this._toggleStatsCharts();
+            });
+        }
+        
+        // 統計データエクスポートボタン
+        const exportStatsBtn = document.getElementById('export-stats');
+        if (exportStatsBtn) {
+            exportStatsBtn.addEventListener('click', () => {
+                this.events.emit('exportStatsRequest');
+            });
+        }
     }
     
     /**
@@ -135,7 +307,74 @@ export class UIController {
      * @private
      */
     _switchTab(tabName) {
-        // ここに実装を追加
+        // すべてのタブボタンから active クラスを削除
+        this.elements.tabButtons.forEach(button => {
+            button.classList.remove('active');
+        });
+        
+        // すべてのタブコンテンツを非表示
+        this.elements.tabContents.forEach(content => {
+            content.classList.add('hidden');
+        });
+        
+        // 指定したタブをアクティブにする
+        const activeTabButton = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+        if (activeTabButton) {
+            activeTabButton.classList.add('active');
+        }
+        
+        // 指定したタブコンテンツを表示
+        const activeTabContent = document.getElementById(`${tabName}-tab`);
+        if (activeTabContent) {
+            activeTabContent.classList.remove('hidden');
+        }
+        
+        // タブ変更イベントを発火
+        this.events.emit('tabChanged', { tab: tabName });
+    }
+    
+    /**
+     * チャートタブを切り替える
+     * @param {string} chartType - チャートタイプ
+     * @private
+     */
+    _switchChartTab(chartType) {
+        // すべてのチャートタブから active クラスを削除
+        this.elements.chartTabs.forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // 指定したチャートタブをアクティブにする
+        const activeChartTab = document.querySelector(`.chart-tab[data-chart="${chartType}"]`);
+        if (activeChartTab) {
+            activeChartTab.classList.add('active');
+        }
+        
+        // チャート変更イベントを発火
+        this.events.emit('chartTypeChanged', { type: chartType });
+    }
+    
+    /**
+     * 統計グラフの表示/非表示を切り替える
+     * @private
+     */
+    _toggleStatsCharts() {
+        if (!this.elements.statsChartsContainer) return;
+        
+        const isVisible = this.elements.statsChartsContainer.style.display !== 'none';
+        
+        if (isVisible) {
+            this.elements.statsChartsContainer.style.display = 'none';
+        } else {
+            this.elements.statsChartsContainer.style.display = 'block';
+            
+            // 最初のチャートタブをアクティブにする
+            const firstChartTab = document.querySelector('.chart-tab');
+            if (firstChartTab) {
+                const chartType = firstChartTab.getAttribute('data-chart');
+                this._switchChartTab(chartType);
+            }
+        }
     }
     
     /**
@@ -188,6 +427,46 @@ export class UIController {
         });
         
         // その他の統計を更新
+        if (this.elements.housesValue) {
+            this.elements.housesValue.textContent = this.city.buildings && this.city.buildings.house ? this.city.buildings.house : 0;
+        }
+        
+        if (this.elements.factoriesValue) {
+            this.elements.factoriesValue.textContent = this.city.buildings && this.city.buildings.factory ? this.city.buildings.factory : 0;
+        }
+        
+        if (this.elements.roadsValue) {
+            this.elements.roadsValue.textContent = this.city.buildings && this.city.buildings.road ? this.city.buildings.road : 0;
+        }
+        
+        if (this.elements.happinessValue) {
+            this.elements.happinessValue.textContent = `${this.city.happiness}%`;
+        }
+        
+        if (this.elements.environmentValue) {
+            this.elements.environmentValue.textContent = `${this.city.environment}%`;
+        }
+        
+        if (this.elements.educationValue) {
+            this.elements.educationValue.textContent = `${this.city.education}%`;
+        }
+        
+        if (this.elements.taxValue) {
+            this.elements.taxValue.textContent = `${this.city.taxRate}%`;
+        }
+        
+        // プログレスバーを更新
+        if (this.elements.happinessBar) {
+            this.elements.happinessBar.style.width = `${this.city.happiness}%`;
+        }
+        
+        if (this.elements.environmentBar) {
+            this.elements.environmentBar.style.width = `${this.city.environment}%`;
+        }
+        
+        if (this.elements.educationBar) {
+            this.elements.educationBar.style.width = `${this.city.education}%`;
+        }
     }
     
     /**
@@ -227,7 +506,108 @@ export class UIController {
      * @param {string} districtId - 地区ID
      */
     showDistrictDetails(districtId) {
-        // ここに実装を追加
+        if (!this.elements.districtDetails || !this.city) return;
+        
+        // 対象の地区を取得
+        const district = this.city.districts.find(d => d.id === districtId);
+        if (!district) return;
+        
+        // 地区詳細を構築
+        this.elements.districtDetails.innerHTML = `
+            <div class="district-header">
+                <h3 class="district-name">${district.name}</h3>
+                <span class="district-type ${district.type}">${this._getDistrictTypeName(district.type)}</span>
+                <span class="district-level">レベル ${district.level}</span>
+            </div>
+            
+            <div class="district-body">
+                <div class="district-stats">
+                    <div class="district-stat">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>位置: (${district.position.x}, ${district.position.y})</span>
+                    </div>
+                    <div class="district-stat">
+                        <i class="fas fa-users"></i>
+                        <span>人口: ${district.population || 0} 人</span>
+                    </div>
+                    <div class="district-stat">
+                        <i class="fas fa-building"></i>
+                        <span>建物: ${this._getDistrictBuildingsCount(district)} 棟</span>
+                    </div>
+                </div>
+                
+                <div class="district-actions">
+                    <button class="btn" data-action="upgrade-district" data-district-id="${district.id}">
+                        <i class="fas fa-arrow-up"></i> アップグレード
+                        <span class="cost">¥${this._getDistrictUpgradeCost(district)}</span>
+                    </button>
+                    <button class="btn" data-action="add-building" data-district-id="${district.id}">
+                        <i class="fas fa-plus"></i> 建物を追加
+                    </button>
+                    <button class="btn btn-secondary" data-action="view-district" data-district-id="${district.id}">
+                        <i class="fas fa-search"></i> 詳細を表示
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // ボタンにイベントリスナーを設定
+        const buttons = this.elements.districtDetails.querySelectorAll('button[data-action]');
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const action = button.getAttribute('data-action');
+                const districtId = button.getAttribute('data-district-id');
+                
+                this.events.emit('districtActionSelected', {
+                    action,
+                    districtId
+                });
+            });
+        });
+        
+        // コンテナを表示
+        this.elements.districtDetailsContainer.style.display = 'block';
+    }
+    
+    /**
+     * 地区のタイプ名を取得する
+     * @param {string} type - 地区タイプ
+     * @returns {string} - 地区タイプ名
+     * @private
+     */
+    _getDistrictTypeName(type) {
+        const districtTypes = getDistrictTypes();
+        const districtType = districtTypes.find(t => t.id === type);
+        return districtType ? districtType.name : type;
+    }
+    
+    /**
+     * 地区の建物数を取得する
+     * @param {Object} district - 地区オブジェクト
+     * @returns {number} - 建物の総数
+     * @private
+     */
+    _getDistrictBuildingsCount(district) {
+        if (!district.buildings) return 0;
+        
+        return Object.values(district.buildings).reduce((total, count) => total + count, 0);
+    }
+    
+    /**
+     * 地区のアップグレードコストを取得する
+     * @param {Object} district - 地区オブジェクト
+     * @returns {number} - アップグレードコスト
+     * @private
+     */
+    _getDistrictUpgradeCost(district) {
+        const districtTypes = getDistrictTypes();
+        const districtType = districtTypes.find(t => t.id === district.type);
+        
+        if (!districtType) return 0;
+        
+        // レベルに応じたコスト倍率
+        const levelMultiplier = Math.pow(2, district.level);
+        return districtType.cost * levelMultiplier;
     }
     
     /**
