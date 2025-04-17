@@ -17,6 +17,9 @@ export class EnhancedClickerController {
         this.uiController = uiController;
         this.events = new EventEmitter();
         
+        // Document reference (default is current document, can be set for iframe usage)
+        this.document = document;
+        
         // Clicker status
         this.state = {
             totalClicks: 0,
@@ -74,6 +77,16 @@ export class EnhancedClickerController {
     }
     
     /**
+     * Set document for iframe support
+     * @param {Document} doc - Document object
+     */
+    setDocument(doc) {
+        this.document = doc;
+        this.initialized = false;
+        this._initialize();
+    }
+    
+    /**
      * Initialize clicker UI
      * @private
      */
@@ -117,83 +130,19 @@ export class EnhancedClickerController {
      * @private
      */
     _createClickerUI() {
-        // Remove existing clicker element
-        const existingClicker = document.getElementById('clicker-container');
-        if (existingClicker) {
-            existingClicker.remove();
+        // Find clicker container
+        this.clickerElement = this.document.getElementById('clicker-container');
+        if (!this.clickerElement) {
+            console.error('Clicker container not found in document');
+            return;
         }
         
-        // Create clicker container
-        this.clickerElement = document.createElement('div');
-        this.clickerElement.id = 'clicker-container';
-        this.clickerElement.className = 'clicker-container hidden';
-        
-        // Create clicker UI structure
-        this.clickerElement.innerHTML = `
-            <div class="clicker-header">
-                <h2><i class="fas fa-coins"></i> ${GameText.CLICKER.TITLE}</h2>
-                <p>${GameText.CLICKER.DESCRIPTION}</p>
-                <button id="clicker-exit" class="clicker-exit-btn">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="clicker-content">
-                <div class="clicker-main">
-                    <div class="clicker-target-container">
-                        <div id="clicker-target" class="clicker-target">
-                            <i class="fas fa-city"></i>
-                        </div>
-                    </div>
-                    
-                    <div id="clicker-stats" class="clicker-stats">
-                        <div class="clicker-stat">
-                            <i class="fas fa-hand-pointer"></i>
-                            <span id="click-value">${GameText.CLICKER.CLICK_VALUE.replace('{value}', this.state.clickValue)}</span>
-                        </div>
-                        <div class="clicker-stat">
-                            <i class="fas fa-hourglass-half"></i>
-                            <span id="auto-income">${GameText.CLICKER.AUTO_INCOME.replace('{value}', this.state.autoFunds)}</span>
-                        </div>
-                        <div class="clicker-stat">
-                            <i class="fas fa-coins"></i>
-                            <span id="total-earned">${GameText.CLICKER.TOTAL_EARNED.replace('{value}', this.state.totalFunds)}</span>
-                        </div>
-                        <div class="clicker-stat">
-                            <i class="fas fa-mouse-pointer"></i>
-                            <span id="total-clicks">${GameText.CLICKER.TOTAL_CLICKS.replace('{value}', this.state.totalClicks)}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="clicker-sections">
-                    <div class="clicker-section">
-                        <h3><i class="fas fa-building"></i> 建物</h3>
-                        <div id="clicker-buildings" class="clicker-buildings"></div>
-                    </div>
-                    
-                    <div class="clicker-section">
-                        <h3><i class="fas fa-arrow-up"></i> アップグレード</h3>
-                        <div id="clicker-upgrades" class="clicker-upgrades"></div>
-                    </div>
-                    
-                    <div class="clicker-section">
-                        <h3><i class="fas fa-trophy"></i> 実績</h3>
-                        <div id="clicker-achievements" class="clicker-achievements"></div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Add to DOM
-        document.body.appendChild(this.clickerElement);
-        
         // Save UI references
-        this.clickerTarget = document.getElementById('clicker-target');
-        this.clickerStats = document.getElementById('clicker-stats');
-        this.buildingsContainer = document.getElementById('clicker-buildings');
-        this.upgradesContainer = document.getElementById('clicker-upgrades');
-        this.achievementsContainer = document.getElementById('clicker-achievements');
+        this.clickerTarget = this.document.getElementById('clicker-target');
+        this.clickerStats = this.document.getElementById('clicker-stats');
+        this.buildingsContainer = this.document.getElementById('clicker-buildings');
+        this.upgradesContainer = this.document.getElementById('clicker-upgrades');
+        this.achievementsContainer = this.document.getElementById('clicker-achievements');
         
         // Render buildings, upgrades, and achievements
         this._renderBuildings();
@@ -202,7 +151,7 @@ export class EnhancedClickerController {
         this._updateStats();
         
         // Canvas for particles (optional)
-        const particleCanvas = document.createElement('canvas');
+        const particleCanvas = this.document.createElement('canvas');
         particleCanvas.id = 'particle-canvas';
         particleCanvas.style.position = 'absolute';
         particleCanvas.style.top = '0';
@@ -214,16 +163,16 @@ export class EnhancedClickerController {
         this.clickerElement.appendChild(particleCanvas);
         
         // Resize canvas
-        particleCanvas.width = window.innerWidth;
-        particleCanvas.height = window.innerHeight;
+        particleCanvas.width = this.clickerElement.offsetWidth || 800;
+        particleCanvas.height = this.clickerElement.offsetHeight || 600;
         this.particleCanvas = particleCanvas;
         this.particleContext = particleCanvas.getContext('2d');
         
         // Handle window resize for canvas
-        window.addEventListener('resize', () => {
+        this.document.defaultView.addEventListener('resize', () => {
             if (this.particleCanvas) {
-                this.particleCanvas.width = window.innerWidth;
-                this.particleCanvas.height = window.innerHeight;
+                this.particleCanvas.width = this.clickerElement.offsetWidth || 800;
+                this.particleCanvas.height = this.clickerElement.offsetHeight || 600;
             }
         });
     }
@@ -263,7 +212,7 @@ export class EnhancedClickerController {
         }
         
         // Exit button event listener
-        const exitButton = document.getElementById('clicker-exit');
+        const exitButton = this.document.getElementById('clicker-exit');
         if (exitButton) {
             exitButton.addEventListener('click', () => {
                 this.hide();
@@ -275,7 +224,7 @@ export class EnhancedClickerController {
         }
         
         // Add keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
+        this.document.addEventListener('keydown', (e) => {
             // Only process when clicker is visible
             if (this.clickerElement && !this.clickerElement.classList.contains('hidden')) {
                 // Escape key to exit
@@ -300,6 +249,15 @@ export class EnhancedClickerController {
                 }
             }
         });
+    }
+    
+    /**
+     * Handle click from component
+     * @param {Event} e - Click event
+     * @public - Called from ClickerGameComponent
+     */
+    handleClickFromComponent(e) {
+        this._handleClick(e);
     }
     
     /**
@@ -357,6 +315,8 @@ export class EnhancedClickerController {
      * @private
      */
     _createParticles(x, y, count) {
+        if (!this.particleContext) return;
+        
         for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = 2 + Math.random() * 3;
@@ -433,7 +393,7 @@ export class EnhancedClickerController {
         if (!this.clickerTarget) return;
         
         // Create effect element
-        const effect = document.createElement('div');
+        const effect = this.document.createElement('div');
         effect.className = 'click-effect';
         effect.textContent = `+¥${amount}`;
         
@@ -450,7 +410,9 @@ export class EnhancedClickerController {
         
         // Remove element after animation
         setTimeout(() => {
-            effect.remove();
+            if (effect.parentNode) {
+                effect.parentNode.removeChild(effect);
+            }
         }, 1500);
     }
     
@@ -504,14 +466,14 @@ export class EnhancedClickerController {
      */
     _showAutoIncomeIndicator(amount) {
         // Find auto income stat element
-        const autoIncomeEl = document.getElementById('auto-income');
+        const autoIncomeEl = this.document.getElementById('auto-income');
         if (!autoIncomeEl) return;
         
         // Add highlight class
         autoIncomeEl.classList.add('income-highlight');
         
         // Create mini indicator
-        const indicator = document.createElement('div');
+        const indicator = this.document.createElement('div');
         indicator.className = 'mini-indicator';
         indicator.textContent = `+¥${amount}`;
         indicator.style.position = 'absolute';
@@ -537,7 +499,9 @@ export class EnhancedClickerController {
             indicator.style.opacity = '0';
             
             setTimeout(() => {
-                indicator.remove();
+                if (indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
+                }
             }, 1000);
         }, 1000);
     }
@@ -611,7 +575,7 @@ export class EnhancedClickerController {
         const buildingsHeader = this.buildingsContainer?.parentElement?.querySelector('h3');
         if (buildingsHeader) {
             // Create notification indicator
-            const notification = document.createElement('span');
+            const notification = this.document.createElement('span');
             notification.className = 'unlock-notification';
             notification.innerHTML = '新着！';
             notification.style.backgroundColor = '#f39c12';
@@ -627,7 +591,9 @@ export class EnhancedClickerController {
             
             // Remove after 5 seconds
             setTimeout(() => {
-                notification.remove();
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
             }, 5000);
         }
     }
@@ -724,7 +690,7 @@ export class EnhancedClickerController {
         }
         
         // Trophy animation overlay
-        const trophyOverlay = document.createElement('div');
+        const trophyOverlay = this.document.createElement('div');
         trophyOverlay.className = 'trophy-overlay';
         trophyOverlay.innerHTML = `
             <div class="trophy-container">
@@ -777,7 +743,7 @@ export class EnhancedClickerController {
         });
         
         // Add to body
-        document.body.appendChild(trophyOverlay);
+        this.document.body.appendChild(trophyOverlay);
         
         // Animate in
         setTimeout(() => {
@@ -789,7 +755,9 @@ export class EnhancedClickerController {
         setTimeout(() => {
             trophyOverlay.style.opacity = '0';
             setTimeout(() => {
-                trophyOverlay.remove();
+                if (trophyOverlay.parentNode) {
+                    trophyOverlay.parentNode.removeChild(trophyOverlay);
+                }
             }, 500);
         }, 3000);
     }
@@ -806,7 +774,7 @@ export class EnhancedClickerController {
         // Check funds
         if (this.city.funds < building.cost) {
             // Show insufficient funds message
-            const button = document.querySelector(`[data-building="${buildingType}"]`);
+            const button = this.document.querySelector(`[data-building="${buildingType}"]`);
             if (button) {
                 // Red flash effect
                 button.classList.add('insufficient-funds');
@@ -880,13 +848,13 @@ export class EnhancedClickerController {
         let effectType;
         
         if (GameConfig.BUILDINGS[itemType]?.effects.clickMultiplier) {
-            statToAnimate = document.getElementById('click-value');
+            statToAnimate = this.document.getElementById('click-value');
             effectType = 'click';
         } else if (GameConfig.BUILDINGS[itemType]?.effects.autoFunds) {
-            statToAnimate = document.getElementById('auto-income');
+            statToAnimate = this.document.getElementById('auto-income');
             effectType = 'auto';
         } else if (GameConfig.BUILDINGS[itemType]?.effects.fundMultiplier) {
-            statToAnimate = document.getElementById('click-value');
+            statToAnimate = this.document.getElementById('click-value');
             effectType = 'all';
         }
         
@@ -918,7 +886,7 @@ export class EnhancedClickerController {
         // Check funds
         if (this.city.funds < upgrade.cost) {
             // Show insufficient funds message
-            const button = document.querySelector(`[data-upgrade="${upgradeId}"]`);
+            const button = this.document.querySelector(`[data-upgrade="${upgradeId}"]`);
             if (button) {
                 // Red flash effect
                 button.classList.add('insufficient-funds');
@@ -989,13 +957,13 @@ export class EnhancedClickerController {
         let effectType;
         
         if (upgradeId === 'BETTER_TOOLS') {
-            statToAnimate = document.getElementById('click-value');
+            statToAnimate = this.document.getElementById('click-value');
             effectType = 'click';
         } else if (upgradeId === 'EFFICIENT_PROCESS') {
-            statToAnimate = document.getElementById('auto-income');
+            statToAnimate = this.document.getElementById('auto-income');
             effectType = 'auto';
         } else if (upgradeId === 'ADVANCED_ECONOMY') {
-            statToAnimate = document.getElementById('total-earned');
+            statToAnimate = this.document.getElementById('total-earned');
             effectType = 'all';
         }
         
@@ -1010,7 +978,7 @@ export class EnhancedClickerController {
         }
         
         // Find the upgrade item
-        const upgradeItem = document.querySelector(`[data-upgrade="${upgradeId}"]`)?.closest('.clicker-item');
+        const upgradeItem = this.document.querySelector(`[data-upgrade="${upgradeId}"]`)?.closest('.clicker-item');
         if (upgradeItem) {
             // Add purchased class with animation
             upgradeItem.classList.add('purchased', 'purchase-animation');
@@ -1030,27 +998,27 @@ export class EnhancedClickerController {
         if (!this.clickerStats) return;
         
         // Update click value
-        const clickValueEl = document.getElementById('click-value');
+        const clickValueEl = this.document.getElementById('click-value');
         if (clickValueEl) {
             const effectiveClickValue = this.state.clickValue * this.state.clickMultiplier * this.state.allMultiplier;
             clickValueEl.textContent = GameText.CLICKER.CLICK_VALUE.replace('{value}', Math.floor(effectiveClickValue));
         }
         
         // Update auto income
-        const autoIncomeEl = document.getElementById('auto-income');
+        const autoIncomeEl = this.document.getElementById('auto-income');
         if (autoIncomeEl) {
             const effectiveAutoIncome = this.state.autoFunds * this.state.autoFundsMultiplier * this.state.allMultiplier;
             autoIncomeEl.textContent = GameText.CLICKER.AUTO_INCOME.replace('{value}', Math.floor(effectiveAutoIncome));
         }
         
         // Update total earned funds
-        const totalEarnedEl = document.getElementById('total-earned');
+        const totalEarnedEl = this.document.getElementById('total-earned');
         if (totalEarnedEl) {
             totalEarnedEl.textContent = GameText.CLICKER.TOTAL_EARNED.replace('{value}', this.state.totalFunds.toLocaleString());
         }
         
         // Update total clicks
-        const totalClicksEl = document.getElementById('total-clicks');
+        const totalClicksEl = this.document.getElementById('total-clicks');
         if (totalClicksEl) {
             totalClicksEl.textContent = GameText.CLICKER.TOTAL_CLICKS.replace('{value}', this.state.totalClicks.toLocaleString());
         }
@@ -1070,8 +1038,8 @@ export class EnhancedClickerController {
      */
     _updateAchievementProgress() {
         // First Steps progress
-        const firstStepsProgress = document.querySelector('[data-achievement="FIRST_STEPS"] .progress-fill');
-        const firstStepsText = document.querySelector('[data-achievement="FIRST_STEPS"] .clicker-item-progress span');
+        const firstStepsProgress = this.document.querySelector('[data-achievement="FIRST_STEPS"] .progress-fill');
+        const firstStepsText = this.document.querySelector('[data-achievement="FIRST_STEPS"] .clicker-item-progress span');
         
         if (firstStepsProgress && firstStepsText) {
             const requirement = GameConfig.CLICKER.ACHIEVEMENTS.FIRST_STEPS.requirement.totalClicks;
@@ -1082,8 +1050,8 @@ export class EnhancedClickerController {
         }
         
         // Dedicated Mayor progress
-        const dedicatedMayorProgress = document.querySelector('[data-achievement="DEDICATED_MAYOR"] .progress-fill');
-        const dedicatedMayorText = document.querySelector('[data-achievement="DEDICATED_MAYOR"] .clicker-item-progress span');
+        const dedicatedMayorProgress = this.document.querySelector('[data-achievement="DEDICATED_MAYOR"] .progress-fill');
+        const dedicatedMayorText = this.document.querySelector('[data-achievement="DEDICATED_MAYOR"] .clicker-item-progress span');
         
         if (dedicatedMayorProgress && dedicatedMayorText) {
             const requirement = GameConfig.CLICKER.ACHIEVEMENTS.DEDICATED_MAYOR.requirement.totalClicks;
@@ -1094,8 +1062,8 @@ export class EnhancedClickerController {
         }
         
         // Financial Genius progress
-        const financialGeniusProgress = document.querySelector('[data-achievement="FINANCIAL_GENIUS"] .progress-fill');
-        const financialGeniusText = document.querySelector('[data-achievement="FINANCIAL_GENIUS"] .clicker-item-progress span');
+        const financialGeniusProgress = this.document.querySelector('[data-achievement="FINANCIAL_GENIUS"] .progress-fill');
+        const financialGeniusText = this.document.querySelector('[data-achievement="FINANCIAL_GENIUS"] .clicker-item-progress span');
         
         if (financialGeniusProgress && financialGeniusText) {
             const requirement = GameConfig.CLICKER.ACHIEVEMENTS.FINANCIAL_GENIUS.requirement.totalFunds;
@@ -1120,7 +1088,7 @@ export class EnhancedClickerController {
             const coinMint = GameConfig.BUILDINGS.COIN_MINT;
             const count = this.state.buildings.COIN_MINT || 0;
             
-            const buildingEl = document.createElement('div');
+            const buildingEl = this.document.createElement('div');
             buildingEl.className = 'clicker-item';
             buildingEl.setAttribute('data-building-container', 'COIN_MINT');
             buildingEl.innerHTML = `
@@ -1147,7 +1115,7 @@ export class EnhancedClickerController {
             const bank = GameConfig.BUILDINGS.BANK;
             const count = this.state.buildings.BANK || 0;
             
-            const buildingEl = document.createElement('div');
+            const buildingEl = this.document.createElement('div');
             buildingEl.className = 'clicker-item';
             buildingEl.setAttribute('data-building-container', 'BANK');
             buildingEl.innerHTML = `
@@ -1174,7 +1142,7 @@ export class EnhancedClickerController {
             const investmentFirm = GameConfig.BUILDINGS.INVESTMENT_FIRM;
             const count = this.state.buildings.INVESTMENT_FIRM || 0;
             
-            const buildingEl = document.createElement('div');
+            const buildingEl = this.document.createElement('div');
             buildingEl.className = 'clicker-item';
             buildingEl.setAttribute('data-building-container', 'INVESTMENT_FIRM');
             buildingEl.innerHTML = `
@@ -1230,7 +1198,7 @@ export class EnhancedClickerController {
         const betterTools = GameConfig.CLICKER.UPGRADES.BETTER_TOOLS;
         const betterToolsPurchased = this.state.upgrades[betterToolsId];
         
-        const betterToolsEl = document.createElement('div');
+        const betterToolsEl = this.document.createElement('div');
         betterToolsEl.className = `clicker-item ${betterToolsPurchased ? 'purchased' : ''}`;
         betterToolsEl.setAttribute('data-upgrade-container', betterToolsId);
         betterToolsEl.innerHTML = `
@@ -1257,7 +1225,7 @@ export class EnhancedClickerController {
         const efficientProcess = GameConfig.CLICKER.UPGRADES.EFFICIENT_PROCESS;
         const efficientProcessPurchased = this.state.upgrades[efficientProcessId];
         
-        const efficientProcessEl = document.createElement('div');
+        const efficientProcessEl = this.document.createElement('div');
         efficientProcessEl.className = `clicker-item ${efficientProcessPurchased ? 'purchased' : ''}`;
         efficientProcessEl.setAttribute('data-upgrade-container', efficientProcessId);
         efficientProcessEl.innerHTML = `
@@ -1284,7 +1252,7 @@ export class EnhancedClickerController {
         const advancedEconomy = GameConfig.CLICKER.UPGRADES.ADVANCED_ECONOMY;
         const advancedEconomyPurchased = this.state.upgrades[advancedEconomyId];
         
-        const advancedEconomyEl = document.createElement('div');
+        const advancedEconomyEl = this.document.createElement('div');
         advancedEconomyEl.className = `clicker-item ${advancedEconomyPurchased ? 'purchased' : ''}`;
         advancedEconomyEl.setAttribute('data-upgrade-container', advancedEconomyId);
         advancedEconomyEl.innerHTML = `
@@ -1330,7 +1298,7 @@ export class EnhancedClickerController {
         const firstSteps = GameConfig.CLICKER.ACHIEVEMENTS.FIRST_STEPS;
         const firstStepsUnlocked = this.state.achievements[firstStepsId];
         
-        const firstStepsEl = document.createElement('div');
+        const firstStepsEl = this.document.createElement('div');
         firstStepsEl.className = `clicker-item ${firstStepsUnlocked ? 'unlocked' : ''}`;
         firstStepsEl.setAttribute('data-achievement', firstStepsId);
         firstStepsEl.innerHTML = `
@@ -1357,7 +1325,7 @@ export class EnhancedClickerController {
         const dedicatedMayor = GameConfig.CLICKER.ACHIEVEMENTS.DEDICATED_MAYOR;
         const dedicatedMayorUnlocked = this.state.achievements[dedicatedMayorId];
         
-        const dedicatedMayorEl = document.createElement('div');
+        const dedicatedMayorEl = this.document.createElement('div');
         dedicatedMayorEl.className = `clicker-item ${dedicatedMayorUnlocked ? 'unlocked' : ''}`;
         dedicatedMayorEl.setAttribute('data-achievement', dedicatedMayorId);
         dedicatedMayorEl.innerHTML = `
@@ -1384,7 +1352,7 @@ export class EnhancedClickerController {
         const financialGenius = GameConfig.CLICKER.ACHIEVEMENTS.FINANCIAL_GENIUS;
         const financialGeniusUnlocked = this.state.achievements[financialGeniusId];
         
-        const financialGeniusEl = document.createElement('div');
+        const financialGeniusEl = this.document.createElement('div');
         financialGeniusEl.className = `clicker-item ${financialGeniusUnlocked ? 'unlocked' : ''}`;
         financialGeniusEl.setAttribute('data-achievement', financialGeniusId);
         financialGeniusEl.innerHTML = `
