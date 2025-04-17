@@ -37,6 +37,13 @@ export class CityMapView {
             ui: new Image()
         };
         
+        // スプライトの読み込み状態
+        this.spritesLoaded = {
+            tiles: false,
+            buildings: false,
+            ui: false
+        };
+        
         // タイルタイプ定義
         this.tileTypes = {
             empty: { x: 0, y: 0 },
@@ -64,32 +71,69 @@ export class CityMapView {
             create: { x: 2, y: 0 }
         };
         
-        // スプライト画像のロード
-        this.loadSprites();
-        
         // 初期化
         this._initMap();
+        
+        // スプライト画像のロード
+        this.loadSprites();
     }
     
     /**
      * スプライト画像をロードする
      */
     loadSprites() {
-        this.sprites.tiles.src = 'assets/tiles.svg';
-        this.sprites.buildings.src = 'assets/buildings.svg';
-        this.sprites.ui.src = 'assets/ui-elements.svg';
+        // スプライトのロード完了イベントを設定
+        this.sprites.tiles.onload = () => {
+            this.spritesLoaded.tiles = true;
+            this._checkAllSpritesLoaded();
+        };
         
-        // すべての画像がロードされたらマップを描画
-        Promise.all([
-            new Promise(resolve => this.sprites.tiles.onload = resolve),
-            new Promise(resolve => this.sprites.buildings.onload = resolve),
-            new Promise(resolve => this.sprites.ui.onload = resolve)
-        ]).then(() => {
+        this.sprites.buildings.onload = () => {
+            this.spritesLoaded.buildings = true;
+            this._checkAllSpritesLoaded();
+        };
+        
+        this.sprites.ui.onload = () => {
+            this.spritesLoaded.ui = true;
+            this._checkAllSpritesLoaded();
+        };
+        
+        // エラーハンドリング
+        this.sprites.tiles.onerror = (e) => {
+            console.error('タイルスプライトの読み込みに失敗しました。', e);
+            this.render(); // エラー時もデフォルト表示を試行
+        };
+        
+        this.sprites.buildings.onerror = (e) => {
+            console.error('建物スプライトの読み込みに失敗しました。', e);
+            this.render(); // エラー時もデフォルト表示を試行
+        };
+        
+        this.sprites.ui.onerror = (e) => {
+            console.error('UIスプライトの読み込みに失敗しました。', e);
+            this.render(); // エラー時もデフォルト表示を試行
+        };
+        
+        // スプライトのソースを設定
+        this.sprites.tiles.src = 'assets/tiles.png';
+        this.sprites.buildings.src = 'assets/buildings.png';
+        this.sprites.ui.src = 'assets/ui-elements.png';
+        
+        // 初期描画（スプライトが読み込まれる前にデフォルト表示を行う）
+        setTimeout(() => {
             this.render();
-        }).catch(error => {
-            console.error('スプライトの読み込みに失敗しました。デフォルト表示を使用します。', error);
-            this.render(); // エラー時はデフォルト表示
-        });
+        }, 100);
+    }
+    
+    /**
+     * すべてのスプライトが読み込まれたかチェックする
+     * @private
+     */
+    _checkAllSpritesLoaded() {
+        if (this.spritesLoaded.tiles && this.spritesLoaded.buildings && this.spritesLoaded.ui) {
+            console.log('すべてのスプライトが読み込まれました。');
+            this.render(); // すべてのスプライトが揃ったら再描画
+        }
     }
     
     /**
@@ -264,7 +308,7 @@ export class CityMapView {
             this.render();
         });
         
-        // ズームボタン
+        // ズームイン・アウトのコントロールボタン
         const zoomInBtn = document.getElementById('zoom-in');
         if (zoomInBtn) {
             zoomInBtn.addEventListener('click', () => {
@@ -343,14 +387,19 @@ export class CityMapView {
                     this._drawTile(x, y, 'empty');
                     
                     // 新規作成アイコンを描画
-                    this._drawSprite(
-                        this.sprites.ui, 
-                        this.uiSprites.create.x, 
-                        this.uiSprites.create.y, 
-                        x * this.tileSize + this.tileSize/2 - 12, 
-                        y * this.tileSize + this.tileSize/2 - 12,
-                        24, 24
-                    );
+                    if (this.spritesLoaded.ui) {
+                        this._drawSprite(
+                            this.sprites.ui, 
+                            this.uiSprites.create.x, 
+                            this.uiSprites.create.y, 
+                            x * this.tileSize + this.tileSize/2 - 12, 
+                            y * this.tileSize + this.tileSize/2 - 12,
+                            24, 24
+                        );
+                    } else {
+                        // フォールバック
+                        this._drawCreateIcon(x, y);
+                    }
                 }
                 
                 // ホバー表示
@@ -401,7 +450,7 @@ export class CityMapView {
      * @private
      */
     _drawTile(x, y, type) {
-        if (!this.sprites.tiles.complete) {
+        if (!this.spritesLoaded.tiles) {
             // スプライト未ロード時のフォールバック
             this.ctx.fillStyle = this._getTileColor(type);
             this.ctx.fillRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
@@ -428,7 +477,11 @@ export class CityMapView {
      * @private
      */
     _drawDistrictBuildings(x, y, district) {
-        if (!this.sprites.buildings.complete || !district.buildings) return;
+        if (!this.spritesLoaded.buildings || !district.buildings) {
+            // スプライト未ロードまたは建物がない場合はフォールバック
+            this._drawFallbackBuildings(x, y, district);
+            return;
+        }
         
         // 建物数に基づいて配置を決定
         const buildingCounts = Object.entries(district.buildings)
@@ -477,6 +530,38 @@ export class CityMapView {
                 this.ctx.fillText(count, textX, textY);
             }
         }
+    }
+    
+    /**
+     * 地区の建物をフォールバック表示する
+     * @param {number} x - X座標
+     * @param {number} y - Y座標
+     * @param {Object} district - 地区
+     * @private
+     */
+    _drawFallbackBuildings(x, y, district) {
+        if (!district.buildings) return;
+        
+        const buildingCounts = Object.entries(district.buildings)
+            .filter(([type, count]) => count > 0);
+        
+        if (buildingCounts.length === 0) return;
+        
+        // 建物数を表示
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = '10px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        
+        let text = '';
+        buildingCounts.forEach(([type, count]) => {
+            text += `${type}:${count} `;
+        });
+        
+        const centerX = x * this.tileSize + this.tileSize / 2;
+        const centerY = y * this.tileSize + this.tileSize / 2;
+        
+        this.ctx.fillText(text, centerX, centerY);
     }
     
     /**
@@ -560,7 +645,7 @@ export class CityMapView {
         const padding = 2;
         
         // スプライトがロードされていない場合のフォールバック
-        if (!this.sprites.ui.complete) {
+        if (!this.spritesLoaded.ui) {
             this.ctx.strokeStyle = '#ffcc00';
             this.ctx.lineWidth = 3;
             this.ctx.strokeRect(
@@ -594,7 +679,7 @@ export class CityMapView {
         const padding = 2;
         
         // スプライトがロードされていない場合のフォールバック
-        if (!this.sprites.ui.complete) {
+        if (!this.spritesLoaded.ui) {
             this.ctx.strokeStyle = '#aaaaff';
             this.ctx.lineWidth = 2;
             this.ctx.strokeRect(
@@ -619,6 +704,37 @@ export class CityMapView {
     }
     
     /**
+     * 作成アイコンを描画する（フォールバック用）
+     * @param {number} x - X座標
+     * @param {number} y - Y座標
+     * @private
+     */
+    _drawCreateIcon(x, y) {
+        const centerX = x * this.tileSize + this.tileSize / 2;
+        const centerY = y * this.tileSize + this.tileSize / 2;
+        const size = 16;
+        
+        // 円を描画
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, size, 0, Math.PI * 2);
+        this.ctx.fillStyle = 'rgba(50, 150, 50, 0.5)';
+        this.ctx.fill();
+        this.ctx.strokeStyle = '#2ecc71';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+        
+        // プラス記号を描画
+        this.ctx.beginPath();
+        this.ctx.moveTo(centerX - size/2, centerY);
+        this.ctx.lineTo(centerX + size/2, centerY);
+        this.ctx.moveTo(centerX, centerY - size/2);
+        this.ctx.lineTo(centerX, centerY + size/2);
+        this.ctx.strokeStyle = 'white';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+    }
+    
+    /**
      * スプライトを描画する
      * @param {Image} spriteSheet - スプライトシート
      * @param {number} sx - スプライトX座標
@@ -630,18 +746,25 @@ export class CityMapView {
      * @private
      */
     _drawSprite(spriteSheet, sx, sy, dx, dy, dw, dh) {
-        const spriteSize = 64; // スプライトシートの1タイルサイズ
-        this.ctx.drawImage(
-            spriteSheet,
-            sx * spriteSize,
-            sy * spriteSize,
-            spriteSize,
-            spriteSize,
-            dx,
-            dy,
-            dw,
-            dh
-        );
+        try {
+            const spriteSize = 64; // スプライトシートの1タイルサイズ
+            this.ctx.drawImage(
+                spriteSheet,
+                sx * spriteSize,
+                sy * spriteSize,
+                spriteSize,
+                spriteSize,
+                dx,
+                dy,
+                dw,
+                dh
+            );
+        } catch (e) {
+            console.error('スプライト描画エラー:', e);
+            // エラー時はフォールバック処理を行う
+            this.ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+            this.ctx.fillRect(dx, dy, dw, dh);
+        }
     }
     
     /**
