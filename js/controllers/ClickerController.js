@@ -1,10 +1,9 @@
 /**
  * CitySim - ClickerController クラス
- * クリッカーゲームモードの操作と表示を制御
+ * クリッカーゲームモードの制御を担当
  */
 
 import { GameConfig, GameText } from '../config/GameConfig.js';
-import { ClickerModel } from '../models/ClickerModel.js';
 import { EventEmitter } from '../services/EventEmitter.js';
 
 export class ClickerController {
@@ -18,141 +17,159 @@ export class ClickerController {
         this.uiController = uiController;
         this.events = new EventEmitter();
         
-        // クリッカーモデルの初期化
-        this.model = new ClickerModel(city);
-        
-        // DOM要素の参照
-        this.elements = {
-            clickerContainer: document.getElementById('clicker-container'),
-            clickerCity: document.getElementById('clicker-city'),
-            clickerValue: document.getElementById('clicker-value'),
-            clickerAutoIncome: document.getElementById('clicker-auto-income'),
-            clickerTotalEarned: document.getElementById('clicker-total-earned'),
-            clickerTotalClicks: document.getElementById('clicker-total-clicks'),
-            clickerBuildings: document.getElementById('clicker-buildings'),
-            clickerUpgrades: document.getElementById('clicker-upgrades'),
-            clickerAchievements: document.getElementById('clicker-achievements'),
-            clickerClose: document.getElementById('clicker-close'),
-            clickerReturnToCity: document.getElementById('clicker-return-to-city')
+        // クリッカーステータス
+        this.state = {
+            totalClicks: 0,
+            totalFunds: 0,
+            clickValue: GameConfig.CLICKER.BASE_CLICK_VALUE,
+            autoFunds: 0,
+            clickMultiplier: 1,
+            autoFundsMultiplier: 1,
+            allMultiplier: 1,
+            upgrades: {},
+            buildings: {},
+            achievements: {},
+            unlocked: {
+                COIN_MINT: false,
+                BANK: false,
+                INVESTMENT_FIRM: false
+            }
         };
         
-        // クリッカー表示状態
-        this.visible = false;
+        // 初期化済みかどうか
+        this.initialized = false;
         
-        // イベントリスナーの登録
+        // クリッカーUI要素
+        this.clickerElement = null;
+        this.clickerTarget = null;
+        this.clickerStats = null;
+        this.buildingsContainer = null;
+        this.upgradesContainer = null;
+        this.achievementsContainer = null;
+        
+        // 自動収入タイマー
+        this.autoIncomeTimer = null;
+        
+        // クリッカーデータを都市モデルに関連付け
+        if (!this.city.clickerData) {
+            this.city.clickerData = this.state;
+        } else {
+            this.state = this.city.clickerData;
+        }
+    }
+    
+    /**
+     * クリッカーUIを初期化する
+     * @private
+     */
+    _initialize() {
+        if (this.initialized) return;
+        
+        // クリッカーUIを作成
+        this._createClickerUI();
+        
+        // イベントリスナーを設定
         this._setupEventListeners();
         
-        // クリッカーモデルのイベントをリッスン
-        this._setupModelEventListeners();
+        // 自動収入タイマーを開始
+        this._startAutoIncome();
+        
+        this.initialized = true;
+        
+        // 初期化完了イベントを発火
+        this.events.emit('clickerInitialized', {
+            state: { ...this.state }
+        });
     }
     
     /**
-     * クリッカーモードを表示する
+     * クリッカーUIを作成する
+     * @private
      */
-    show() {
-        if (this.elements.clickerContainer) {
-            this.elements.clickerContainer.classList.remove('hidden');
-            this.visible = true;
+    _createClickerUI() {
+        // 既存のクリッカー要素を削除
+        const existingClicker = document.getElementById('clicker-container');
+        if (existingClicker) {
+            existingClicker.remove();
+        }
+        
+        // クリッカーコンテナを作成
+        this.clickerElement = document.createElement('div');
+        this.clickerElement.id = 'clicker-container';
+        this.clickerElement.className = 'clicker-container hidden';
+        
+        // クリッカーUI構造を作成
+        this.clickerElement.innerHTML = `
+            <div class="clicker-header">
+                <h2><i class="fas fa-coins"></i> ${GameText.CLICKER.TITLE}</h2>
+                <p>${GameText.CLICKER.DESCRIPTION}</p>
+                <button id="clicker-exit" class="clicker-exit-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
             
-            // 自動収入タイマーを開始
-            this.model.startAutoFunds();
-            
-            // UI更新
-            this._updateUI();
-            
-            // クリッカーモード表示イベント
-            this.events.emit('clickerShown');
-        }
-    }
-    
-    /**
-     * クリッカーモードを非表示にする
-     */
-    hide() {
-        if (this.elements.clickerContainer) {
-            this.elements.clickerContainer.classList.add('hidden');
-            this.visible = false;
-            
-            // 自動収入タイマーを停止
-            this.model.stopAutoFunds();
-            
-            // クリッカーモード非表示イベント
-            this.events.emit('clickerHidden');
-        }
-    }
-    
-    /**
-     * クリック処理を実行する
-     */
-    processClick() {
-        const earnings = this.model.click();
+            <div class="clicker-content">
+                <div class="clicker-main">
+                    <div class="clicker-target-container">
+                        <div id="clicker-target" class="clicker-target">
+                            <i class="fas fa-city"></i>
+                        </div>
+                    </div>
+                    
+                    <div id="clicker-stats" class="clicker-stats">
+                        <div class="clicker-stat">
+                            <i class="fas fa-hand-pointer"></i>
+                            <span id="click-value">${GameText.CLICKER.CLICK_VALUE.replace('{value}', this.state.clickValue)}</span>
+                        </div>
+                        <div class="clicker-stat">
+                            <i class="fas fa-hourglass-half"></i>
+                            <span id="auto-income">${GameText.CLICKER.AUTO_INCOME.replace('{value}', this.state.autoFunds)}</span>
+                        </div>
+                        <div class="clicker-stat">
+                            <i class="fas fa-coins"></i>
+                            <span id="total-earned">${GameText.CLICKER.TOTAL_EARNED.replace('{value}', this.state.totalFunds)}</span>
+                        </div>
+                        <div class="clicker-stat">
+                            <i class="fas fa-mouse-pointer"></i>
+                            <span id="total-clicks">${GameText.CLICKER.TOTAL_CLICKS.replace('{value}', this.state.totalClicks)}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="clicker-sections">
+                    <div class="clicker-section">
+                        <h3><i class="fas fa-building"></i> 建物</h3>
+                        <div id="clicker-buildings" class="clicker-buildings"></div>
+                    </div>
+                    
+                    <div class="clicker-section">
+                        <h3><i class="fas fa-arrow-up"></i> アップグレード</h3>
+                        <div id="clicker-upgrades" class="clicker-upgrades"></div>
+                    </div>
+                    
+                    <div class="clicker-section">
+                        <h3><i class="fas fa-trophy"></i> 実績</h3>
+                        <div id="clicker-achievements" class="clicker-achievements"></div>
+                    </div>
+                </div>
+            </div>
+        `;
         
-        // クリック効果アニメーション
-        this._animateClickEffect(earnings);
+        // DOMに追加
+        document.body.appendChild(this.clickerElement);
         
-        // UI更新
-        this._updateUI();
-    }
-    
-    /**
-     * 建物を購入する
-     * @param {string} buildingType - 建物タイプ
-     */
-    buyBuilding(buildingType) {
-        const result = this.model.buyBuilding(buildingType);
+        // UIの参照を保存
+        this.clickerTarget = document.getElementById('clicker-target');
+        this.clickerStats = document.getElementById('clicker-stats');
+        this.buildingsContainer = document.getElementById('clicker-buildings');
+        this.upgradesContainer = document.getElementById('clicker-upgrades');
+        this.achievementsContainer = document.getElementById('clicker-achievements');
         
-        if (result.success) {
-            // 成功通知
-            this._showNotification('success', '購入完了', result.message);
-        } else {
-            // 失敗通知
-            this._showNotification('error', '購入失敗', result.message);
-        }
-        
-        // UI更新
-        this._updateUI();
-    }
-    
-    /**
-     * アップグレードを購入する
-     * @param {string} upgradeType - アップグレードタイプ
-     */
-    buyUpgrade(upgradeType) {
-        const result = this.model.buyUpgrade(upgradeType);
-        
-        if (result.success) {
-            // 成功通知
-            this._showNotification('success', '購入完了', result.message);
-        } else {
-            // 失敗通知
-            this._showNotification('error', '購入失敗', result.message);
-        }
-        
-        // UI更新
-        this._updateUI();
-    }
-    
-    /**
-     * クリッカーの状態を保存する
-     * @param {SaveManager} saveManager - セーブマネージャー
-     */
-    saveState(saveManager) {
-        if (saveManager) {
-            const cityData = saveManager.city.serialize();
-            cityData.clickerData = this.model.serialize();
-            saveManager.city.clickerData = cityData.clickerData;
-        }
-    }
-    
-    /**
-     * クリッカーの状態を読み込む
-     * @param {SaveManager} saveManager - セーブマネージャー
-     */
-    loadState(saveManager) {
-        if (saveManager && saveManager.city && saveManager.city.clickerData) {
-            this.model.deserialize(saveManager.city.clickerData);
-            this._updateUI();
-        }
+        // 建物・アップグレード・実績を表示
+        this._renderBuildings();
+        this._renderUpgrades();
+        this._renderAchievements();
+        this._updateStats();
     }
     
     /**
@@ -160,424 +177,814 @@ export class ClickerController {
      * @private
      */
     _setupEventListeners() {
-        // 都市クリックイベント
-        if (this.elements.clickerCity) {
-            this.elements.clickerCity.addEventListener('click', () => {
-                this.processClick();
+        // クリックターゲットのイベントリスナー
+        if (this.clickerTarget) {
+            this.clickerTarget.addEventListener('click', () => {
+                this._handleClick();
+            });
+            
+            // クリック時のアニメーション
+            this.clickerTarget.addEventListener('mousedown', () => {
+                this.clickerTarget.classList.add('clicked');
+            });
+            
+            this.clickerTarget.addEventListener('mouseup', () => {
+                this.clickerTarget.classList.remove('clicked');
+            });
+            
+            this.clickerTarget.addEventListener('mouseleave', () => {
+                this.clickerTarget.classList.remove('clicked');
             });
         }
         
-        // クローズボタン
-        if (this.elements.clickerClose) {
-            this.elements.clickerClose.addEventListener('click', () => {
+        // 閉じるボタンのイベントリスナー
+        const exitButton = document.getElementById('clicker-exit');
+        if (exitButton) {
+            exitButton.addEventListener('click', () => {
                 this.hide();
-            });
-        }
-        
-        // 都市管理に戻るボタン
-        if (this.elements.clickerReturnToCity) {
-            this.elements.clickerReturnToCity.addEventListener('click', () => {
-                this.hide();
+                // 都市管理モードに切り替えイベントを発火
+                this.events.emit('exitClicker', {
+                    state: { ...this.state }
+                });
             });
         }
     }
     
     /**
-     * モデルのイベントリスナーを設定する
+     * クリックを処理する
      * @private
      */
-    _setupModelEventListeners() {
-        // クリックイベント
-        this.model.events.on('click', (data) => {
-            // 必要に応じてUI更新
+    _handleClick() {
+        // クリック数を更新
+        this.state.totalClicks++;
+        
+        // 獲得資金を計算
+        const clickEffect = this.state.clickValue * this.state.clickMultiplier * this.state.allMultiplier;
+        const fundsGained = Math.floor(clickEffect);
+        
+        // 資金を加算
+        this.city.funds += fundsGained;
+        this.state.totalFunds += fundsGained;
+        
+        // 建物アンロックをチェック
+        this._checkBuildingUnlocks();
+        
+        // 実績をチェック
+        this._checkAchievements();
+        
+        // UIを更新
+        this._updateStats();
+        
+        // クリックイベントを発火
+        this.events.emit('click', {
+            totalClicks: this.state.totalClicks,
+            fundsGained,
+            totalFunds: this.state.totalFunds
         });
         
-        // 自動収入イベント
-        this.model.events.on('autoFunds', (data) => {
-            // 自動収入の視覚的フィードバック
-            if (data.value > 0) {
-                this._animateAutoIncomeEffect(data.value);
+        // クリックエフェクトを表示
+        this._showClickEffect(fundsGained);
+    }
+    
+    /**
+     * クリックエフェクトを表示する
+     * @param {number} amount - 獲得した資金
+     * @private
+     */
+    _showClickEffect(amount) {
+        if (!this.clickerTarget) return;
+        
+        // エフェクト要素を作成
+        const effect = document.createElement('div');
+        effect.className = 'click-effect';
+        effect.textContent = `+¥${amount}`;
+        
+        // ランダムな位置（クリッカーターゲット内）
+        const targetRect = this.clickerTarget.getBoundingClientRect();
+        const x = Math.random() * (targetRect.width - 40);
+        const y = Math.random() * (targetRect.height - 20);
+        
+        effect.style.left = `${x}px`;
+        effect.style.top = `${y}px`;
+        
+        // 要素を追加
+        this.clickerTarget.appendChild(effect);
+        
+        // アニメーション終了後に要素を削除
+        setTimeout(() => {
+            effect.remove();
+        }, 1500);
+    }
+    
+    /**
+     * 自動収入処理を開始する
+     * @private
+     */
+    _startAutoIncome() {
+        // 既存のタイマーをクリア
+        if (this.autoIncomeTimer) {
+            clearInterval(this.autoIncomeTimer);
+        }
+        
+        // 自動収入タイマーを設定
+        this.autoIncomeTimer = setInterval(() => {
+            if (this.state.autoFunds > 0) {
+                // 自動収入を計算
+                const autoIncome = Math.floor(
+                    this.state.autoFunds * this.state.autoFundsMultiplier * this.state.allMultiplier
+                );
+                
+                // 資金を加算
+                this.city.funds += autoIncome;
+                this.state.totalFunds += autoIncome;
+                
+                // 建物アンロックをチェック
+                this._checkBuildingUnlocks();
+                
+                // 実績をチェック
+                this._checkAchievements();
+                
+                // UIを更新
+                this._updateStats();
+                
+                // 自動収入イベントを発火
+                this.events.emit('autoIncome', {
+                    autoIncome,
+                    totalFunds: this.state.totalFunds
+                });
             }
+        }, GameConfig.CLICKER.AUTO_FUNDS_INTERVAL);
+    }
+    
+    /**
+     * 建物のアンロック状態をチェックする
+     * @private
+     */
+    _checkBuildingUnlocks() {
+        // コイン工場のアンロック
+        if (!this.state.unlocked.COIN_MINT && this.state.totalFunds >= GameConfig.CLICKER.UNLOCK_THRESHOLDS.COIN_MINT) {
+            this.state.unlocked.COIN_MINT = true;
+            this._renderBuildings();
             
-            // UI更新（ただし頻繁すぎないように）
-            this._debounceUpdateUI();
-        });
-        
-        // 建物購入イベント
-        this.model.events.on('buildingPurchased', (data) => {
-            // 必要に応じてUI更新
-        });
-        
-        // アップグレード購入イベント
-        this.model.events.on('upgradePurchased', (data) => {
-            // 必要に応じてUI更新
-        });
-        
-        // 建物アンロックイベント
-        this.model.events.on('buildingUnlocked', (data) => {
-            // アンロック通知
-            const message = GameText.CLICKER.UNLOCK_MESSAGE.replace('{building}', data.name);
-            this._showNotification('info', 'アンロック', message);
+            // アンロックイベントを発火
+            this.events.emit('buildingUnlocked', {
+                building: 'COIN_MINT',
+                totalFunds: this.state.totalFunds
+            });
             
-            // UI更新
-            this._updateUI();
+            // 通知を表示
+            this.uiController.addEventToLog({
+                title: '新しい建物がアンロック',
+                message: GameText.CLICKER.UNLOCK_MESSAGE.replace('{building}', GameConfig.BUILDINGS.COIN_MINT.name),
+                type: 'event-success',
+                icon: 'unlock'
+            });
+        }
+        
+        // 銀行のアンロック
+        if (!this.state.unlocked.BANK && this.state.totalFunds >= GameConfig.CLICKER.UNLOCK_THRESHOLDS.BANK) {
+            this.state.unlocked.BANK = true;
+            this._renderBuildings();
+            
+            // アンロックイベントを発火
+            this.events.emit('buildingUnlocked', {
+                building: 'BANK',
+                totalFunds: this.state.totalFunds
+            });
+            
+            // 通知を表示
+            this.uiController.addEventToLog({
+                title: '新しい建物がアンロック',
+                message: GameText.CLICKER.UNLOCK_MESSAGE.replace('{building}', GameConfig.BUILDINGS.BANK.name),
+                type: 'event-success',
+                icon: 'unlock'
+            });
+        }
+        
+        // 投資会社のアンロック
+        if (!this.state.unlocked.INVESTMENT_FIRM && this.state.totalFunds >= GameConfig.CLICKER.UNLOCK_THRESHOLDS.INVESTMENT_FIRM) {
+            this.state.unlocked.INVESTMENT_FIRM = true;
+            this._renderBuildings();
+            
+            // アンロックイベントを発火
+            this.events.emit('buildingUnlocked', {
+                building: 'INVESTMENT_FIRM',
+                totalFunds: this.state.totalFunds
+            });
+            
+            // 通知を表示
+            this.uiController.addEventToLog({
+                title: '新しい建物がアンロック',
+                message: GameText.CLICKER.UNLOCK_MESSAGE.replace('{building}', GameConfig.BUILDINGS.INVESTMENT_FIRM.name),
+                type: 'event-success',
+                icon: 'unlock'
+            });
+        }
+    }
+    
+    /**
+     * 実績達成状況をチェックする
+     * @private
+     */
+    _checkAchievements() {
+        // 最初の一歩
+        if (!this.state.achievements.FIRST_STEPS && this.state.totalClicks >= GameConfig.CLICKER.ACHIEVEMENTS.FIRST_STEPS.requirement.totalClicks) {
+            this.state.achievements.FIRST_STEPS = true;
+            
+            // ボーナスを適用
+            this.state.clickMultiplier += GameConfig.CLICKER.ACHIEVEMENTS.FIRST_STEPS.bonus.clickMultiplier;
+            
+            this._renderAchievements();
+            
+            // 実績解除イベントを発火
+            this.events.emit('achievementUnlocked', {
+                achievement: 'FIRST_STEPS',
+                bonus: GameConfig.CLICKER.ACHIEVEMENTS.FIRST_STEPS.bonus
+            });
+            
+            // 通知を表示
+            this.uiController.addEventToLog({
+                title: '実績解除',
+                message: GameText.CLICKER.ACHIEVEMENT_UNLOCKED.replace(
+                    '{name}', 
+                    GameConfig.CLICKER.ACHIEVEMENTS.FIRST_STEPS.name
+                ),
+                type: 'event-success',
+                icon: 'trophy'
+            });
+        }
+        
+        // 献身的な市長
+        if (!this.state.achievements.DEDICATED_MAYOR && this.state.totalClicks >= GameConfig.CLICKER.ACHIEVEMENTS.DEDICATED_MAYOR.requirement.totalClicks) {
+            this.state.achievements.DEDICATED_MAYOR = true;
+            
+            // ボーナスを適用
+            this.state.clickMultiplier += GameConfig.CLICKER.ACHIEVEMENTS.DEDICATED_MAYOR.bonus.clickMultiplier;
+            
+            this._renderAchievements();
+            
+            // 実績解除イベントを発火
+            this.events.emit('achievementUnlocked', {
+                achievement: 'DEDICATED_MAYOR',
+                bonus: GameConfig.CLICKER.ACHIEVEMENTS.DEDICATED_MAYOR.bonus
+            });
+            
+            // 通知を表示
+            this.uiController.addEventToLog({
+                title: '実績解除',
+                message: GameText.CLICKER.ACHIEVEMENT_UNLOCKED.replace(
+                    '{name}', 
+                    GameConfig.CLICKER.ACHIEVEMENTS.DEDICATED_MAYOR.name
+                ),
+                type: 'event-success',
+                icon: 'trophy'
+            });
+        }
+        
+        // 財政の天才
+        if (!this.state.achievements.FINANCIAL_GENIUS && this.state.totalFunds >= GameConfig.CLICKER.ACHIEVEMENTS.FINANCIAL_GENIUS.requirement.totalFunds) {
+            this.state.achievements.FINANCIAL_GENIUS = true;
+            
+            // ボーナスを適用
+            this.state.allMultiplier += GameConfig.CLICKER.ACHIEVEMENTS.FINANCIAL_GENIUS.bonus.fundMultiplier;
+            
+            this._renderAchievements();
+            
+            // 実績解除イベントを発火
+            this.events.emit('achievementUnlocked', {
+                achievement: 'FINANCIAL_GENIUS',
+                bonus: GameConfig.CLICKER.ACHIEVEMENTS.FINANCIAL_GENIUS.bonus
+            });
+            
+            // 通知を表示
+            this.uiController.addEventToLog({
+                title: '実績解除',
+                message: GameText.CLICKER.ACHIEVEMENT_UNLOCKED.replace(
+                    '{name}', 
+                    GameConfig.CLICKER.ACHIEVEMENTS.FINANCIAL_GENIUS.name
+                ),
+                type: 'event-success',
+                icon: 'trophy'
+            });
+        }
+    }
+    
+    /**
+     * 建物を購入する
+     * @param {string} buildingType - 建物タイプ
+     * @private
+     */
+    _buyBuilding(buildingType) {
+        const building = GameConfig.BUILDINGS[buildingType];
+        if (!building) return;
+        
+        // 資金チェック
+        if (this.city.funds < building.cost) {
+            this.uiController.addEventToLog({
+                title: '建物購入失敗',
+                message: `資金が足りません。必要資金: ¥${building.cost.toLocaleString()} | 現在の資金: ¥${this.city.funds.toLocaleString()}`,
+                type: 'event-danger',
+                icon: 'exclamation-circle'
+            });
+            return;
+        }
+        
+        // 資金を消費
+        this.city.funds -= building.cost;
+        
+        // 建物を追加
+        if (!this.state.buildings[buildingType]) {
+            this.state.buildings[buildingType] = 0;
+        }
+        this.state.buildings[buildingType]++;
+        
+        // 効果を適用
+        if (building.effects.clickMultiplier) {
+            this.state.clickMultiplier += building.effects.clickMultiplier;
+        }
+        
+        if (building.effects.autoFunds) {
+            this.state.autoFunds += building.effects.autoFunds;
+        }
+        
+        // UIを更新
+        this._renderBuildings();
+        this._updateStats();
+        
+        // 購入イベントを発火
+        this.events.emit('buildingPurchased', {
+            type: buildingType,
+            cost: building.cost,
+            count: this.state.buildings[buildingType]
         });
         
-        // 実績解除イベント
-        this.model.events.on('achievementUnlocked', (data) => {
-            // 実績解除通知
-            const message = GameText.CLICKER.ACHIEVEMENT_UNLOCKED.replace('{name}', data.name);
-            this._showNotification('success', '実績解除', `${message}: ${data.description}`);
-            
-            // UI更新
-            this._updateUI();
+        // 通知を表示
+        this.uiController.addEventToLog({
+            title: '建物購入',
+            message: `${building.name}を購入しました。残りの資金: ¥${this.city.funds.toLocaleString()}`,
+            type: 'event-success',
+            icon: building.icon
         });
     }
     
     /**
-     * UI要素を更新する
+     * アップグレードを購入する
+     * @param {string} upgradeId - アップグレードID
      * @private
      */
-    _updateUI() {
-        // 可視状態でなければ更新しない
-        if (!this.visible) return;
+    _buyUpgrade(upgradeId) {
+        const upgrade = GameConfig.CLICKER.UPGRADES[upgradeId];
+        if (!upgrade) return;
         
-        // 統計情報の更新
-        const status = this.model.getStatus();
-        
-        if (this.elements.clickerValue) {
-            this.elements.clickerValue.textContent = GameText.CLICKER.CLICK_VALUE.replace('{value}', status.clickValue);
+        // 既に購入済みかチェック
+        if (this.state.upgrades[upgradeId]) {
+            return;
         }
         
-        if (this.elements.clickerAutoIncome) {
-            this.elements.clickerAutoIncome.textContent = GameText.CLICKER.AUTO_INCOME.replace('{value}', status.autoFundsPerSecond);
+        // 資金チェック
+        if (this.city.funds < upgrade.cost) {
+            this.uiController.addEventToLog({
+                title: 'アップグレード購入失敗',
+                message: `資金が足りません。必要資金: ¥${upgrade.cost.toLocaleString()} | 現在の資金: ¥${this.city.funds.toLocaleString()}`,
+                type: 'event-danger',
+                icon: 'exclamation-circle'
+            });
+            return;
         }
         
-        if (this.elements.clickerTotalEarned) {
-            this.elements.clickerTotalEarned.textContent = GameText.CLICKER.TOTAL_EARNED.replace('{value}', status.totalEarned.toLocaleString());
+        // 資金を消費
+        this.city.funds -= upgrade.cost;
+        
+        // アップグレードを購入
+        this.state.upgrades[upgradeId] = true;
+        
+        // 効果を適用
+        if (upgrade.effect.clickMultiplier) {
+            this.state.clickMultiplier += upgrade.effect.clickMultiplier;
         }
         
-        if (this.elements.clickerTotalClicks) {
-            this.elements.clickerTotalClicks.textContent = GameText.CLICKER.TOTAL_CLICKS.replace('{value}', status.totalClicks.toLocaleString());
+        if (upgrade.effect.autoFundsMultiplier) {
+            this.state.autoFundsMultiplier += upgrade.effect.autoFundsMultiplier;
         }
         
-        // 建物リストの更新
-        this._updateBuildingsList();
+        if (upgrade.effect.allMultiplier) {
+            this.state.allMultiplier += upgrade.effect.allMultiplier;
+        }
         
-        // アップグレードリストの更新
-        this._updateUpgradesList();
+        // UIを更新
+        this._renderUpgrades();
+        this._updateStats();
         
-        // 実績リストの更新
-        this._updateAchievementsList();
+        // 購入イベントを発火
+        this.events.emit('upgradePurchased', {
+            id: upgradeId,
+            cost: upgrade.cost,
+            effect: upgrade.effect
+        });
         
-        // 資金表示の更新
+        // 通知を表示
+        this.uiController.addEventToLog({
+            title: 'アップグレード購入',
+            message: `${upgrade.name}を購入しました。残りの資金: ¥${this.city.funds.toLocaleString()}`,
+            type: 'event-success',
+            icon: 'arrow-up'
+        });
+    }
+    
+    /**
+     * クリッカー統計を更新する
+     * @private
+     */
+    _updateStats() {
+        if (!this.clickerStats) return;
+        
+        // クリック価値を更新
+        const clickValueEl = document.getElementById('click-value');
+        if (clickValueEl) {
+            const effectiveClickValue = this.state.clickValue * this.state.clickMultiplier * this.state.allMultiplier;
+            clickValueEl.textContent = GameText.CLICKER.CLICK_VALUE.replace('{value}', Math.floor(effectiveClickValue));
+        }
+        
+        // 自動収入を更新
+        const autoIncomeEl = document.getElementById('auto-income');
+        if (autoIncomeEl) {
+            const effectiveAutoIncome = this.state.autoFunds * this.state.autoFundsMultiplier * this.state.allMultiplier;
+            autoIncomeEl.textContent = GameText.CLICKER.AUTO_INCOME.replace('{value}', Math.floor(effectiveAutoIncome));
+        }
+        
+        // 合計獲得資金を更新
+        const totalEarnedEl = document.getElementById('total-earned');
+        if (totalEarnedEl) {
+            totalEarnedEl.textContent = GameText.CLICKER.TOTAL_EARNED.replace('{value}', this.state.totalFunds.toLocaleString());
+        }
+        
+        // 合計クリック数を更新
+        const totalClicksEl = document.getElementById('total-clicks');
+        if (totalClicksEl) {
+            totalClicksEl.textContent = GameText.CLICKER.TOTAL_CLICKS.replace('{value}', this.state.totalClicks.toLocaleString());
+        }
+        
+        // UIコントローラーの統計表示も更新
         if (this.uiController) {
             this.uiController.updateAllStatDisplays();
         }
     }
     
     /**
-     * 建物リストを更新する
+     * 建物リストを描画する
      * @private
      */
-    _updateBuildingsList() {
-        if (!this.elements.clickerBuildings) return;
+    _renderBuildings() {
+        if (!this.buildingsContainer) return;
         
-        // 建物リストをクリア
-        this.elements.clickerBuildings.innerHTML = '';
+        this.buildingsContainer.innerHTML = '';
         
-        // 建物設定ループ
-        const buildings = ['COIN_MINT', 'BANK', 'INVESTMENT_FIRM'];
-        
-        buildings.forEach(buildingType => {
-            // アンロック状態の確認
-            if (!this.model.unlocked[buildingType] && this.model.unlocked.hasOwnProperty(buildingType)) {
-                // 未解放の建物は表示しない（ただしヒントは表示可能）
-                const thresholds = GameConfig.CLICKER.UNLOCK_THRESHOLDS;
-                if (thresholds[buildingType]) {
-                    const unlockHint = document.createElement('div');
-                    unlockHint.className = 'clicker-unlock-hint';
-                    unlockHint.innerHTML = `
-                        <div class="unlock-icon"><i class="fas fa-lock"></i></div>
-                        <div class="unlock-info">
-                            <span class="unlock-title">???</span>
-                            <span class="unlock-requirement">解放条件: ¥${thresholds[buildingType].toLocaleString()}稼ぐ</span>
-                        </div>
-                    `;
-                    this.elements.clickerBuildings.appendChild(unlockHint);
-                }
-                return;
-            }
+        // コイン工場
+        if (this.state.unlocked.COIN_MINT) {
+            const coinMint = GameConfig.BUILDINGS.COIN_MINT;
+            const count = this.state.buildings.COIN_MINT || 0;
             
-            const buildingConfig = GameConfig.BUILDINGS[buildingType];
-            if (!buildingConfig) return;
-            
-            // 所有数
-            const ownedCount = this.model.buildings[buildingType] || 0;
-            
-            // 購入コスト（所有数に応じて上昇）
-            const cost = Math.floor(buildingConfig.cost * Math.pow(1.15, ownedCount));
-            
-            // 建物アイテムの作成
-            const buildingItem = document.createElement('div');
-            buildingItem.className = `clicker-building-item ${this.city.funds < cost ? 'disabled' : ''}`;
-            buildingItem.setAttribute('data-building-type', buildingType);
-            
-            // 効果の説明テキスト
-            let effectsText = '';
-            if (buildingConfig.effects.clickMultiplier) {
-                effectsText += `クリック価値 +${(buildingConfig.effects.clickMultiplier * 100).toFixed(0)}%、`;
-            }
-            if (buildingConfig.effects.autoFunds) {
-                effectsText += `自動収入 +¥${buildingConfig.effects.autoFunds}/秒、`;
-            }
-            if (buildingConfig.effects.fundMultiplier) {
-                effectsText += `収入 +${(buildingConfig.effects.fundMultiplier * 100).toFixed(0)}%、`;
-            }
-            // 末尾の「、」を削除
-            effectsText = effectsText.replace(/、$/, '');
-            
-            buildingItem.innerHTML = `
-                <div class="building-icon"><i class="fas fa-${buildingConfig.icon}"></i></div>
-                <div class="building-info">
-                    <span class="building-name">${buildingConfig.name} <span class="building-count">(${ownedCount})</span></span>
-                    <span class="building-effect">${effectsText}</span>
-                    <span class="building-cost">¥${cost.toLocaleString()}</span>
+            const buildingEl = document.createElement('div');
+            buildingEl.className = 'clicker-item';
+            buildingEl.innerHTML = `
+                <div class="clicker-item-icon"><i class="fas fa-${coinMint.icon}"></i></div>
+                <div class="clicker-item-info">
+                    <div class="clicker-item-name">${coinMint.name} <span class="clicker-item-count">(${count})</span></div>
+                    <div class="clicker-item-desc">${coinMint.description}</div>
+                    <div class="clicker-item-effect">
+                        <span>クリック +${(coinMint.effects.clickMultiplier * 100)}%</span>
+                        <span>自動収入 +¥${coinMint.effects.autoFunds}/秒</span>
+                    </div>
                 </div>
-                <button class="building-buy-btn" ${this.city.funds < cost ? 'disabled' : ''}>購入</button>
+                <button class="clicker-item-btn" data-building="COIN_MINT">
+                    <span>購入</span>
+                    <span class="clicker-item-cost">¥${coinMint.cost}</span>
+                </button>
             `;
             
-            // 購入ボタンのイベント
-            const buyButton = buildingItem.querySelector('.building-buy-btn');
-            if (buyButton) {
-                buyButton.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.buyBuilding(buildingType);
-                });
-            }
+            this.buildingsContainer.appendChild(buildingEl);
+        }
+        
+        // 銀行
+        if (this.state.unlocked.BANK) {
+            const bank = GameConfig.BUILDINGS.BANK;
+            const count = this.state.buildings.BANK || 0;
             
-            this.elements.clickerBuildings.appendChild(buildingItem);
+            const buildingEl = document.createElement('div');
+            buildingEl.className = 'clicker-item';
+            buildingEl.innerHTML = `
+                <div class="clicker-item-icon"><i class="fas fa-${bank.icon}"></i></div>
+                <div class="clicker-item-info">
+                    <div class="clicker-item-name">${bank.name} <span class="clicker-item-count">(${count})</span></div>
+                    <div class="clicker-item-desc">${bank.description}</div>
+                    <div class="clicker-item-effect">
+                        <span>自動収入 +¥${bank.effects.autoFunds}/秒</span>
+                        <span>資金保管 +¥${bank.effects.fundStorage}</span>
+                    </div>
+                </div>
+                <button class="clicker-item-btn" data-building="BANK">
+                    <span>購入</span>
+                    <span class="clicker-item-cost">¥${bank.cost}</span>
+                </button>
+            `;
+            
+            this.buildingsContainer.appendChild(buildingEl);
+        }
+        
+        // 投資会社
+        if (this.state.unlocked.INVESTMENT_FIRM) {
+            const investmentFirm = GameConfig.BUILDINGS.INVESTMENT_FIRM;
+            const count = this.state.buildings.INVESTMENT_FIRM || 0;
+            
+            const buildingEl = document.createElement('div');
+            buildingEl.className = 'clicker-item';
+            buildingEl.innerHTML = `
+                <div class="clicker-item-icon"><i class="fas fa-${investmentFirm.icon}"></i></div>
+                <div class="clicker-item-info">
+                    <div class="clicker-item-name">${investmentFirm.name} <span class="clicker-item-count">(${count})</span></div>
+                    <div class="clicker-item-desc">${investmentFirm.description}</div>
+                    <div class="clicker-item-effect">
+                        <span>全収入 +${(investmentFirm.effects.fundMultiplier * 100)}%</span>
+                        <span>自動収入 +¥${investmentFirm.effects.autoFunds}/秒</span>
+                    </div>
+                </div>
+                <button class="clicker-item-btn" data-building="INVESTMENT_FIRM">
+                    <span>購入</span>
+                    <span class="clicker-item-cost">¥${investmentFirm.cost}</span>
+                </button>
+            `;
+            
+            this.buildingsContainer.appendChild(buildingEl);
+        }
+        
+        // アンロックされた建物がない場合
+        if (this.buildingsContainer.children.length === 0) {
+            this.buildingsContainer.innerHTML = `
+                <div class="clicker-empty">
+                    <p>まだ建物はアンロックされていません。</p>
+                    <p>資金を稼いで新しい建物をアンロックしましょう！</p>
+                </div>
+            `;
+        }
+        
+        // 建物購入ボタンのイベントリスナーを設定
+        const buildingButtons = this.buildingsContainer.querySelectorAll('.clicker-item-btn');
+        buildingButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const buildingType = button.getAttribute('data-building');
+                this._buyBuilding(buildingType);
+            });
         });
     }
     
     /**
-     * アップグレードリストを更新する
+     * アップグレードリストを描画する
      * @private
      */
-    _updateUpgradesList() {
-        if (!this.elements.clickerUpgrades) return;
+    _renderUpgrades() {
+        if (!this.upgradesContainer) return;
         
-        // アップグレードリストをクリア
-        this.elements.clickerUpgrades.innerHTML = '';
+        this.upgradesContainer.innerHTML = '';
         
-        // アップグレード設定ループ
-        for (const [upgradeType, upgradeConfig] of Object.entries(GameConfig.CLICKER.UPGRADES)) {
-            // 既に購入済みならスキップ
-            if (this.model.upgrades[upgradeType]) {
-                const upgradeItem = document.createElement('div');
-                upgradeItem.className = 'clicker-upgrade-item purchased';
-                upgradeItem.innerHTML = `
-                    <div class="upgrade-icon"><i class="fas fa-check-circle"></i></div>
-                    <div class="upgrade-info">
-                        <span class="upgrade-name">${upgradeConfig.name}</span>
-                        <span class="upgrade-description">${upgradeConfig.description}</span>
-                    </div>
-                `;
-                this.elements.clickerUpgrades.appendChild(upgradeItem);
-                continue;
-            }
-            
-            // 効果の説明テキスト
-            let effectsText = '';
-            if (upgradeConfig.effect.clickMultiplier) {
-                effectsText += `クリック価値 +${(upgradeConfig.effect.clickMultiplier * 100).toFixed(0)}%、`;
-            }
-            if (upgradeConfig.effect.autoFundsMultiplier) {
-                effectsText += `自動収入 +${(upgradeConfig.effect.autoFundsMultiplier * 100).toFixed(0)}%、`;
-            }
-            if (upgradeConfig.effect.allMultiplier) {
-                effectsText += `すべての収入 +${(upgradeConfig.effect.allMultiplier * 100).toFixed(0)}%、`;
-            }
-            // 末尾の「、」を削除
-            effectsText = effectsText.replace(/、$/, '');
-            
-            // アップグレードアイテムの作成
-            const upgradeItem = document.createElement('div');
-            upgradeItem.className = `clicker-upgrade-item ${this.city.funds < upgradeConfig.cost ? 'disabled' : ''}`;
-            upgradeItem.setAttribute('data-upgrade-type', upgradeType);
-            
-            upgradeItem.innerHTML = `
-                <div class="upgrade-icon"><i class="fas fa-arrow-up"></i></div>
-                <div class="upgrade-info">
-                    <span class="upgrade-name">${upgradeConfig.name}</span>
-                    <span class="upgrade-effect">${effectsText}</span>
-                    <span class="upgrade-cost">¥${upgradeConfig.cost.toLocaleString()}</span>
+        // 改良ツール
+        const betterToolsId = 'BETTER_TOOLS';
+        const betterTools = GameConfig.CLICKER.UPGRADES.BETTER_TOOLS;
+        const betterToolsPurchased = this.state.upgrades[betterToolsId];
+        
+        const betterToolsEl = document.createElement('div');
+        betterToolsEl.className = `clicker-item ${betterToolsPurchased ? 'purchased' : ''}`;
+        betterToolsEl.innerHTML = `
+            <div class="clicker-item-icon"><i class="fas fa-tools"></i></div>
+            <div class="clicker-item-info">
+                <div class="clicker-item-name">${betterTools.name} ${betterToolsPurchased ? '<span class="purchased-tag">購入済み</span>' : ''}</div>
+                <div class="clicker-item-desc">${betterTools.description}</div>
+                <div class="clicker-item-effect">
+                    <span>クリック価値 +${(betterTools.effect.clickMultiplier * 100)}%</span>
                 </div>
-                <button class="upgrade-buy-btn" ${this.city.funds < upgradeConfig.cost ? 'disabled' : ''}>購入</button>
-            `;
-            
-            // 購入ボタンのイベント
-            const buyButton = upgradeItem.querySelector('.upgrade-buy-btn');
-            if (buyButton) {
-                buyButton.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.buyUpgrade(upgradeType);
-                });
-            }
-            
-            this.elements.clickerUpgrades.appendChild(upgradeItem);
-        }
-    }
-    
-    /**
-     * 実績リストを更新する
-     * @private
-     */
-    _updateAchievementsList() {
-        if (!this.elements.clickerAchievements) return;
+            </div>
+            ${betterToolsPurchased ? '' : `
+                <button class="clicker-item-btn" data-upgrade="${betterToolsId}">
+                    <span>購入</span>
+                    <span class="clicker-item-cost">¥${betterTools.cost}</span>
+                </button>
+            `}
+        `;
         
-        // 実績リストをクリア
-        this.elements.clickerAchievements.innerHTML = '';
+        this.upgradesContainer.appendChild(betterToolsEl);
         
-        // 実績設定ループ
-        for (const [achievementType, achievement] of Object.entries(GameConfig.CLICKER.ACHIEVEMENTS)) {
-            // 実績アイテムの作成
-            const achievementItem = document.createElement('div');
-            achievementItem.className = `clicker-achievement-item ${this.model.achievements[achievementType] ? 'unlocked' : 'locked'}`;
-            
-            // 条件の説明テキスト
-            let requirementText = '';
-            if (achievement.requirement.totalClicks) {
-                requirementText += `${achievement.requirement.totalClicks.toLocaleString()}回クリックする`;
-            }
-            if (achievement.requirement.totalFunds) {
-                requirementText += `¥${achievement.requirement.totalFunds.toLocaleString()}稼ぐ`;
-            }
-            
-            // ボーナスの説明テキスト
-            let bonusText = '';
-            if (achievement.bonus) {
-                if (achievement.bonus.clickMultiplier) {
-                    bonusText += `クリック価値 +${(achievement.bonus.clickMultiplier * 100).toFixed(0)}%、`;
-                }
-                if (achievement.bonus.autoFundsMultiplier) {
-                    bonusText += `自動収入 +${(achievement.bonus.autoFundsMultiplier * 100).toFixed(0)}%、`;
-                }
-                if (achievement.bonus.fundMultiplier) {
-                    bonusText += `すべての収入 +${(achievement.bonus.fundMultiplier * 100).toFixed(0)}%、`;
-                }
-                // 末尾の「、」を削除
-                bonusText = bonusText.replace(/、$/, '');
-            }
-            
-            achievementItem.innerHTML = `
-                <div class="achievement-icon">
-                    <i class="fas fa-${this.model.achievements[achievementType] ? 'trophy' : 'lock'}"></i>
+        // 効率的な工程
+        const efficientProcessId = 'EFFICIENT_PROCESS';
+        const efficientProcess = GameConfig.CLICKER.UPGRADES.EFFICIENT_PROCESS;
+        const efficientProcessPurchased = this.state.upgrades[efficientProcessId];
+        
+        const efficientProcessEl = document.createElement('div');
+        efficientProcessEl.className = `clicker-item ${efficientProcessPurchased ? 'purchased' : ''}`;
+        efficientProcessEl.innerHTML = `
+            <div class="clicker-item-icon"><i class="fas fa-cogs"></i></div>
+            <div class="clicker-item-info">
+                <div class="clicker-item-name">${efficientProcess.name} ${efficientProcessPurchased ? '<span class="purchased-tag">購入済み</span>' : ''}</div>
+                <div class="clicker-item-desc">${efficientProcess.description}</div>
+                <div class="clicker-item-effect">
+                    <span>自動収入 +${(efficientProcess.effect.autoFundsMultiplier * 100)}%</span>
                 </div>
-                <div class="achievement-info">
-                    <span class="achievement-name">${achievement.name}</span>
-                    <span class="achievement-description">${achievement.description}</span>
-                    ${bonusText ? `<span class="achievement-bonus">ボーナス: ${bonusText}</span>` : ''}
+            </div>
+            ${efficientProcessPurchased ? '' : `
+                <button class="clicker-item-btn" data-upgrade="${efficientProcessId}">
+                    <span>購入</span>
+                    <span class="clicker-item-cost">¥${efficientProcess.cost}</span>
+                </button>
+            `}
+        `;
+        
+        this.upgradesContainer.appendChild(efficientProcessEl);
+        
+        // 先進経済
+        const advancedEconomyId = 'ADVANCED_ECONOMY';
+        const advancedEconomy = GameConfig.CLICKER.UPGRADES.ADVANCED_ECONOMY;
+        const advancedEconomyPurchased = this.state.upgrades[advancedEconomyId];
+        
+        const advancedEconomyEl = document.createElement('div');
+        advancedEconomyEl.className = `clicker-item ${advancedEconomyPurchased ? 'purchased' : ''}`;
+        advancedEconomyEl.innerHTML = `
+            <div class="clicker-item-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="clicker-item-info">
+                <div class="clicker-item-name">${advancedEconomy.name} ${advancedEconomyPurchased ? '<span class="purchased-tag">購入済み</span>' : ''}</div>
+                <div class="clicker-item-desc">${advancedEconomy.description}</div>
+                <div class="clicker-item-effect">
+                    <span>全収入 +${(advancedEconomy.effect.allMultiplier * 100)}%</span>
                 </div>
-            `;
-            
-            this.elements.clickerAchievements.appendChild(achievementItem);
-        }
-    }
-    
-    /**
-     * クリック効果のアニメーションを表示
-     * @param {number} value - 獲得資金
-     * @private
-     */
-    _animateClickEffect(value) {
-        if (!this.elements.clickerCity) return;
+            </div>
+            ${advancedEconomyPurchased ? '' : `
+                <button class="clicker-item-btn" data-upgrade="${advancedEconomyId}">
+                    <span>購入</span>
+                    <span class="clicker-item-cost">¥${advancedEconomy.cost}</span>
+                </button>
+            `}
+        `;
         
-        // クリック効果を表示
-        const clickEffect = document.createElement('div');
-        clickEffect.className = 'click-effect';
-        clickEffect.textContent = `+¥${value}`;
+        this.upgradesContainer.appendChild(advancedEconomyEl);
         
-        // ランダムな位置オフセット
-        const offsetX = (Math.random() - 0.5) * 40;
-        const offsetY = (Math.random() - 0.5) * 40;
-        
-        // クリック位置からの相対位置
-        clickEffect.style.left = `calc(50% + ${offsetX}px)`;
-        clickEffect.style.top = `calc(50% + ${offsetY}px)`;
-        
-        this.elements.clickerCity.appendChild(clickEffect);
-        
-        // アニメーション後に削除
-        setTimeout(() => {
-            clickEffect.remove();
-        }, 1500);
-    }
-    
-    /**
-     * 自動収入効果のアニメーションを表示
-     * @param {number} value - 獲得資金
-     * @private
-     */
-    _animateAutoIncomeEffect(value) {
-        if (!this.elements.clickerCity || !this.visible) return;
-        
-        // 自動収入効果を表示（稀に表示）
-        if (Math.random() > 0.3) return;
-        
-        const autoEffect = document.createElement('div');
-        autoEffect.className = 'auto-income-effect';
-        autoEffect.textContent = `+¥${value}`;
-        
-        // ランダムな位置
-        const offsetX = (Math.random() - 0.5) * 80;
-        const offsetY = (Math.random() - 0.5) * 80;
-        
-        autoEffect.style.left = `calc(50% + ${offsetX}px)`;
-        autoEffect.style.top = `calc(50% + ${offsetY}px)`;
-        
-        this.elements.clickerCity.appendChild(autoEffect);
-        
-        // アニメーション後に削除
-        setTimeout(() => {
-            autoEffect.remove();
-        }, 2000);
-    }
-    
-    /**
-     * UI更新の頻度を制限する（多すぎる更新を防ぐ）
-     * @private
-     */
-    _debounceUpdateUI() {
-        if (this._updateTimeout) return;
-        
-        this._updateTimeout = setTimeout(() => {
-            this._updateUI();
-            this._updateTimeout = null;
-        }, 1000); // 1秒に1回まで更新
-    }
-    
-    /**
-     * 通知を表示する
-     * @param {string} type - 通知タイプ
-     * @param {string} title - 通知タイトル
-     * @param {string} message - 通知メッセージ
-     * @private
-     */
-    _showNotification(type, title, message) {
-        if (this.uiController) {
-            const notificationType = type === 'error' ? 'event-danger' : 
-                                    type === 'success' ? 'event-success' : 'event-info';
-            
-            const icon = type === 'error' ? 'exclamation-circle' : 
-                        type === 'success' ? 'check-circle' : 'info-circle';
-            
-            this.uiController.addEventToLog({
-                title: title,
-                message: message,
-                type: notificationType,
-                icon: icon
+        // アップグレード購入ボタンのイベントリスナーを設定
+        const upgradeButtons = this.upgradesContainer.querySelectorAll('.clicker-item-btn');
+        upgradeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const upgradeId = button.getAttribute('data-upgrade');
+                this._buyUpgrade(upgradeId);
             });
+        });
+    }
+    
+    /**
+     * 実績リストを描画する
+     * @private
+     */
+    _renderAchievements() {
+        if (!this.achievementsContainer) return;
+        
+        this.achievementsContainer.innerHTML = '';
+        
+        // 最初の一歩
+        const firstStepsId = 'FIRST_STEPS';
+        const firstSteps = GameConfig.CLICKER.ACHIEVEMENTS.FIRST_STEPS;
+        const firstStepsUnlocked = this.state.achievements[firstStepsId];
+        
+        const firstStepsEl = document.createElement('div');
+        firstStepsEl.className = `clicker-item ${firstStepsUnlocked ? 'unlocked' : ''}`;
+        firstStepsEl.innerHTML = `
+            <div class="clicker-item-icon"><i class="fas fa-baby"></i></div>
+            <div class="clicker-item-info">
+                <div class="clicker-item-name">${firstSteps.name} ${firstStepsUnlocked ? '<span class="unlocked-tag">達成済み</span>' : ''}</div>
+                <div class="clicker-item-desc">${firstSteps.description}</div>
+                <div class="clicker-item-effect">
+                    <span>クリック価値 +${(firstSteps.bonus.clickMultiplier * 100)}%</span>
+                </div>
+                <div class="clicker-item-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.min(100, (this.state.totalClicks / firstSteps.requirement.totalClicks) * 100)}%"></div>
+                    </div>
+                    <span>${this.state.totalClicks} / ${firstSteps.requirement.totalClicks}</span>
+                </div>
+            </div>
+        `;
+        
+        this.achievementsContainer.appendChild(firstStepsEl);
+        
+        // 献身的な市長
+        const dedicatedMayorId = 'DEDICATED_MAYOR';
+        const dedicatedMayor = GameConfig.CLICKER.ACHIEVEMENTS.DEDICATED_MAYOR;
+        const dedicatedMayorUnlocked = this.state.achievements[dedicatedMayorId];
+        
+        const dedicatedMayorEl = document.createElement('div');
+        dedicatedMayorEl.className = `clicker-item ${dedicatedMayorUnlocked ? 'unlocked' : ''}`;
+        dedicatedMayorEl.innerHTML = `
+            <div class="clicker-item-icon"><i class="fas fa-user-tie"></i></div>
+            <div class="clicker-item-info">
+                <div class="clicker-item-name">${dedicatedMayor.name} ${dedicatedMayorUnlocked ? '<span class="unlocked-tag">達成済み</span>' : ''}</div>
+                <div class="clicker-item-desc">${dedicatedMayor.description}</div>
+                <div class="clicker-item-effect">
+                    <span>クリック価値 +${(dedicatedMayor.bonus.clickMultiplier * 100)}%</span>
+                </div>
+                <div class="clicker-item-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.min(100, (this.state.totalClicks / dedicatedMayor.requirement.totalClicks) * 100)}%"></div>
+                    </div>
+                    <span>${this.state.totalClicks} / ${dedicatedMayor.requirement.totalClicks}</span>
+                </div>
+            </div>
+        `;
+        
+        this.achievementsContainer.appendChild(dedicatedMayorEl);
+        
+        // 財政の天才
+        const financialGeniusId = 'FINANCIAL_GENIUS';
+        const financialGenius = GameConfig.CLICKER.ACHIEVEMENTS.FINANCIAL_GENIUS;
+        const financialGeniusUnlocked = this.state.achievements[financialGeniusId];
+        
+        const financialGeniusEl = document.createElement('div');
+        financialGeniusEl.className = `clicker-item ${financialGeniusUnlocked ? 'unlocked' : ''}`;
+        financialGeniusEl.innerHTML = `
+            <div class="clicker-item-icon"><i class="fas fa-donate"></i></div>
+            <div class="clicker-item-info">
+                <div class="clicker-item-name">${financialGenius.name} ${financialGeniusUnlocked ? '<span class="unlocked-tag">達成済み</span>' : ''}</div>
+                <div class="clicker-item-desc">${financialGenius.description}</div>
+                <div class="clicker-item-effect">
+                    <span>全収入 +${(financialGenius.bonus.fundMultiplier * 100)}%</span>
+                </div>
+                <div class="clicker-item-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.min(100, (this.state.totalFunds / financialGenius.requirement.totalFunds) * 100)}%"></div>
+                    </div>
+                    <span>¥${this.state.totalFunds.toLocaleString()} / ¥${financialGenius.requirement.totalFunds.toLocaleString()}</span>
+                </div>
+            </div>
+        `;
+        
+        this.achievementsContainer.appendChild(financialGeniusEl);
+    }
+    
+    /**
+     * クリッカーUIを表示する
+     */
+    show() {
+        // 初期化
+        if (!this.initialized) {
+            this._initialize();
+        }
+        
+        // UIを表示
+        if (this.clickerElement) {
+            this.clickerElement.classList.remove('hidden');
+        }
+        
+        // 表示イベントを発火
+        this.events.emit('shown', {
+            state: { ...this.state }
+        });
+    }
+    
+    /**
+     * クリッカーUIを非表示にする
+     */
+    hide() {
+        if (this.clickerElement) {
+            this.clickerElement.classList.add('hidden');
+        }
+        
+        // 非表示イベントを発火
+        this.events.emit('hidden', {
+            state: { ...this.state }
+        });
+    }
+    
+    /**
+     * 状態を保存する
+     * @param {SaveManager} saveManager - セーブマネージャー
+     */
+    saveState(saveManager) {
+        if (!saveManager) return;
+        
+        // 都市モデルにクリッカーデータを関連付け
+        this.city.clickerData = { ...this.state };
+    }
+    
+    /**
+     * 状態を読み込む
+     * @param {SaveManager} saveManager - セーブマネージャー
+     */
+    loadState(saveManager) {
+        if (!saveManager) return;
+        
+        // 都市モデルからクリッカーデータを取得
+        if (this.city.clickerData) {
+            this.state = { ...this.city.clickerData };
+        }
+        
+        // UIを更新
+        if (this.initialized) {
+            this._renderBuildings();
+            this._renderUpgrades();
+            this._renderAchievements();
+            this._updateStats();
         }
     }
 }
