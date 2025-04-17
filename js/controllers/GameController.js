@@ -164,6 +164,11 @@ export class GameController {
      * @private
      */
     _setupUIEventListeners() {
+        // アクション選択イベントをリッスン
+        this.uiController.events.on('actionSelected', (data) => {
+            this._handleAction(data.action, data.params);
+        });
+        
         // 建設リクエスト
         this.uiController.events.on('buildRequest', (data) => {
             const result = this.buildStructure(data.type);
@@ -313,6 +318,170 @@ export class GameController {
             if (this.city.districts.length > 0) {
                 this._checkDistrictRandomEvents();
             }
+        });
+    }
+    
+    /**
+     * アクションを処理する
+     * @param {string} action - アクション名
+     * @param {Object} params - パラメータ
+     * @private
+     */
+    _handleAction(action, params = {}) {
+        switch (action) {
+            case 'build_house':
+                this._handleBuildAction('HOUSE');
+                break;
+            case 'build_factory':
+                this._handleBuildAction('FACTORY');
+                break;
+            case 'build_road':
+                this._handleBuildAction('ROAD');
+                break;
+            case 'build_park':
+                this._handleBuildAction('PARK');
+                break;
+            case 'build_school':
+                this._handleBuildAction('SCHOOL');
+                break;
+            case 'set_tax_rate':
+                if (params && params.taxRate !== undefined) {
+                    this.setTaxRate(params.taxRate / 100);
+                } else {
+                    this.showTaxRateDialog();
+                }
+                break;
+            case 'next_year':
+                this.advanceYear();
+                break;
+            case 'clicker_mode':
+                this.switchGameMode('clicker');
+                break;
+            case 'create_district':
+                this._showCreateDistrictDialog();
+                break;
+            // 他のアクション
+            default:
+                console.log(`未実装のアクション: ${action}`);
+        }
+    }
+    
+    /**
+     * 建設アクションを処理する
+     * @param {string} buildingType - 建物タイプ
+     * @private
+     */
+    _handleBuildAction(buildingType) {
+        const result = this.buildStructure(buildingType);
+        
+        if (result.success) {
+            this.uiController.addEventToLog({
+                title: '建設完了',
+                message: result.message,
+                type: 'event-success',
+                icon: GameConfig.BUILDINGS[buildingType].icon
+            });
+        } else {
+            this.uiController.addEventToLog({
+                title: '建設失敗',
+                message: result.message,
+                type: 'event-danger',
+                icon: 'exclamation-circle'
+            });
+        }
+    }
+    
+    /**
+     * 地区作成ダイアログを表示する
+     * @private
+     */
+    _showCreateDistrictDialog() {
+        // 既存のダイアログがあれば削除
+        const existingDialog = document.getElementById('district-dialog');
+        if (existingDialog) {
+            existingDialog.remove();
+        }
+        
+        // ダイアログを作成
+        const dialog = document.createElement('div');
+        dialog.id = 'district-dialog';
+        dialog.className = 'dialog';
+        
+        // 地区タイプのオプションを生成
+        const districtTypes = getDistrictTypes();
+        const typeOptions = districtTypes.map(type => 
+            `<option value="${type.id}">${type.name} (¥${type.cost.toLocaleString()})</option>`
+        ).join('');
+        
+        dialog.innerHTML = `
+            <div class="dialog-content">
+                <h2><i class="fas fa-city"></i> 新しい地区を作成</h2>
+                <div class="form-group">
+                    <label for="district-name">地区名:</label>
+                    <input type="text" id="district-name" placeholder="新しい地区の名前">
+                </div>
+                <div class="form-group">
+                    <label for="district-type">地区タイプ:</label>
+                    <select id="district-type">
+                        ${typeOptions}
+                    </select>
+                </div>
+                <div id="district-type-description" class="description"></div>
+                <div class="dialog-buttons">
+                    <button id="create-district-cancel" class="btn btn-secondary">キャンセル</button>
+                    <button id="create-district-confirm" class="btn btn-primary">作成</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(dialog);
+        
+        // 最初の地区タイプの説明を表示
+        if (districtTypes.length > 0) {
+            const firstType = districtTypes[0];
+            document.getElementById('district-type-description').innerHTML = 
+                `<p>${firstType.description}</p><p>効果: 人口 +${firstType.effects.population || 0}、幸福度 ${firstType.effects.happiness > 0 ? '+' : ''}${firstType.effects.happiness || 0}%、環境 ${firstType.effects.environment > 0 ? '+' : ''}${firstType.effects.environment || 0}%</p>`;
+        }
+        
+        // 地区タイプ選択変更時の処理
+        document.getElementById('district-type').addEventListener('change', (e) => {
+            const selectedType = districtTypes.find(type => type.id === e.target.value);
+            if (selectedType) {
+                document.getElementById('district-type-description').innerHTML = 
+                    `<p>${selectedType.description}</p><p>効果: 人口 +${selectedType.effects.population || 0}、幸福度 ${selectedType.effects.happiness > 0 ? '+' : ''}${selectedType.effects.happiness || 0}%、環境 ${selectedType.effects.environment > 0 ? '+' : ''}${selectedType.effects.environment || 0}%</p>`;
+            }
+        });
+        
+        // キャンセルボタン
+        document.getElementById('create-district-cancel').addEventListener('click', () => {
+            dialog.remove();
+        });
+        
+        // 作成ボタン
+        document.getElementById('create-district-confirm').addEventListener('click', () => {
+            const name = document.getElementById('district-name').value;
+            const type = document.getElementById('district-type').value;
+            
+            // 地区を作成
+            const result = this.createDistrict(type, { name: name || null });
+            
+            if (result.success) {
+                this.uiController.addEventToLog({
+                    title: '地区作成完了',
+                    message: result.message,
+                    type: 'event-success',
+                    icon: 'map-marked-alt'
+                });
+            } else {
+                this.uiController.addEventToLog({
+                    title: '地区作成失敗',
+                    message: result.message,
+                    type: 'event-danger',
+                    icon: 'exclamation-circle'
+                });
+            }
+            
+            dialog.remove();
         });
     }
     
