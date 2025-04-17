@@ -114,10 +114,10 @@ export class CityMapView {
             this.render(); // エラー時もデフォルト表示を試行
         };
         
-        // スプライトのソースを設定
-        this.sprites.tiles.src = 'assets/tiles.png';
-        this.sprites.buildings.src = 'assets/buildings.png';
-        this.sprites.ui.src = 'assets/ui-elements.png';
+        // スプライトのソースを設定（SVG形式）
+        this.sprites.tiles.src = 'assets/tiles.svg';
+        this.sprites.buildings.src = 'assets/buildings.svg';
+        this.sprites.ui.src = 'assets/ui-elements.svg';
         
         // 初期描画（スプライトが読み込まれる前にデフォルト表示を行う）
         setTimeout(() => {
