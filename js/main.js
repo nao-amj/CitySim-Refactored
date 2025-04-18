@@ -12,8 +12,6 @@ import { EventSystem } from './events/EventSystem.js';
 import { TimeManager } from './services/TimeManager.js';
 import { SaveManager } from './services/SaveManager.js';
 import { TutorialController } from './controllers/TutorialController.js';
-// クリッカーモード統合用のインポート
-import { initializeClickerMode, isClickerAvailable } from './main_integration.js';
 
 // DOMが読み込まれた後にゲームを初期化
 document.addEventListener('DOMContentLoaded', () => {
@@ -61,11 +59,6 @@ function initGame() {
         console.log('Tutorial step changed', data);
         // 必要に応じて追加のアクションを実行
     });
-    
-    // クリッカーモードの初期化・統合
-    if (isClickerAvailable) {
-        initializeClickerMode(gameController, city, uiController);
-    }
     
     // 保存データがあれば読み込み
     const loadResult = gameController.loadGame(saveManager);
