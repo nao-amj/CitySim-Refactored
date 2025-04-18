@@ -1379,21 +1379,14 @@ export class EnhancedClickerController {
      * Show clicker UI
      */
     show() {
-        // Initialize if not already
-        if (!this.initialized) {
-            this._initialize();
-        }
-        
-        // Show UI
+        // Show UI (initialization handled via setDocument)
         if (this.clickerElement) {
             this.clickerElement.classList.remove('hidden');
-            
             // Add entrance animation
             this.clickerElement.style.animation = 'none';
             void this.clickerElement.offsetHeight; // Force reflow
             this.clickerElement.style.animation = 'fadeInScale 0.3s forwards';
         }
-        
         // Emit shown event
         this.events.emit('shown', {
             state: { ...this.state }
