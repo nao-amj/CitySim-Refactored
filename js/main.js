@@ -12,6 +12,7 @@ import { EventSystem } from './events/EventSystem.js';
 import { TimeManager } from './services/TimeManager.js';
 import { SaveManager } from './services/SaveManager.js';
 import { TutorialController } from './controllers/TutorialController.js';
+import { ClickerGameComponent } from './components/ClickerGameComponent.js';
 
 // DOMが読み込まれた後にゲームを初期化
 document.addEventListener('DOMContentLoaded', () => {
@@ -83,4 +84,8 @@ function initGame() {
             tutorialController
         };
     }
+
+    // ClickerGameComponentの表示
+    const clickerComp = new ClickerGameComponent(city, uiController);
+    clickerComp.show();
 }

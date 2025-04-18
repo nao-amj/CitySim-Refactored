@@ -28,6 +28,8 @@
   color: var(--clicker-dark);
   z-index: 1500;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   font-family: var(--clicker-font);
   display: flex;
   flex-direction: column;
