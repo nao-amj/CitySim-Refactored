@@ -105,6 +105,18 @@
                         <span class="roads-value"></span>
                     </div>
                     <div class="stat-item">
+                        <span>公園</span>
+                        <span class="parks-value"></span>
+                    </div>
+                    <div class="stat-item">
+                        <span>学校</span>
+                        <span class="schools-value"></span>
+                    </div>
+                    <div class="stat-item">
+                        <span>病院</span>
+                        <span class="hospitals-value"></span>
+                    </div>
+                    <div class="stat-item">
                         <span>地区</span>
                         <span class="districts-count"></span>
                     </div>
@@ -148,14 +160,13 @@
             </div>
 
             <div class="game-content">
-                <div class="game-log-container">
-                    <h2><i class="fas fa-history"></i> ゲームログ</h2>
-                    <div class="game-log" id="game-output">
-                        <!-- ゲームログはここに表示されます -->
+                <!-- 地区詳細表示エリア -->
+                <div class="city-map-container" id="city-map-container">
+                    <h2><i class="fas fa-map"></i> 都市マップ</h2>
+                    <div id="city-map" class="city-map" style="display: none;">
+                        <!-- 都市マップはここに表示されます -->
                     </div>
                 </div>
-                
-                <!-- 地区詳細表示エリア -->
                 <div class="district-details-container" id="district-details-container">
                     <h2><i class="fas fa-map-marked-alt"></i> 地区詳細</h2>
                     <div id="district-details" class="district-details">
@@ -166,19 +177,10 @@
                     </div>
                 </div>
                 
-                <!-- 都市マップ表示エリア -->
-                <div class="city-map-container" id="city-map-container">
-                    <h2><i class="fas fa-map"></i> 都市マップ</h2>
-                    <div id="city-map" class="city-map" style="display: none;">
-                        <!-- 都市マップはここに表示されます -->
-                    </div>
-                </div>
-                
                 <!-- 統計グラフ表示エリア -->
                 <div class="stats-charts-container" id="stats-charts-container">
                     <h2><i class="fas fa-chart-line"></i> 都市統計グラフ</h2>
-                    <div id="stats-charts" class="stats-charts">
-                        <!-- 統計グラフはここに表示されます -->
+                    <div class="stats-charts">
                         <div class="chart-tabs">
                             <button class="chart-tab active" data-chart="population">人口</button>
                             <button class="chart-tab" data-chart="funds">資金</button>
@@ -186,8 +188,8 @@
                             <button class="chart-tab" data-chart="environment">環境</button>
                             <button class="chart-tab" data-chart="education">教育</button>
                         </div>
-                        <div class="chart-container" id="chart-display">
-                            <!-- グラフがここに表示されます -->
+                        <div class="chart-container">
+                            <canvas id="chart-canvas"></canvas>
                         </div>
                         <div class="chart-controls">
                             <button id="export-stats" class="btn">
@@ -200,6 +202,10 @@
             
             <!-- 地区リスト表示エリア -->
             <div class="districts-sidebar">
+                <div class="game-log-container sidebar-log">
+                    <h2><i class="fas fa-history"></i> ゲームログ</h2>
+                    <div class="game-log" id="game-output-sidebar"></div>
+                </div>
                 <h2><i class="fas fa-list"></i> 地区リスト</h2>
                 <div id="districts-list" class="districts-list">
                     <!-- 地区リストはここに表示されます -->

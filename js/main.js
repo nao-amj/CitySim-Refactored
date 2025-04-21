@@ -47,6 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // setup ClickerGameComponent (manually show/hide via game mode)
   const clickerComp = new ClickerGameComponent(city, uiController);
 
+  // Subscribe UIController to eventSystem for notifications
+  eventSystem.events.on('eventTriggered', ({ event }) => {
+    uiController.addEventToLog(event);
+    uiController.addFixedEvent(event);
+  });
+
   // lifecycle: init and start
   app.init();
   // load saved game
@@ -59,6 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
       clickerComp.show();
     } else {
       clickerComp.hide();
+    }
+  });
+  // Also handle UIController actionSelected for clicker mode
+  uiController.events.on('actionSelected', ({ action }) => {
+    if (action === 'clicker_mode') {
+      clickerComp.show();
     }
   });
   // auto-save on unload

@@ -149,7 +149,83 @@ export class GameController {
         // 税率を設定
         this.setTaxRate(newRate);
     }
-    
+
+    /**
+     * 融資の申請を処理する
+     */
+    requestLoan() {
+        const input = prompt('融資金額を入力してください（数字）:');
+        if (!input) return;
+        const amount = Number(input);
+        if (isNaN(amount) || amount <= 0) {
+            this.uiController.addEventToLog({
+                title: '融資申請失敗',
+                message: '有効な金額を入力してください。',
+                type: 'event-danger',
+                icon: 'exclamation-circle'
+            });
+            return;
+        }
+        this.city.funds += amount;
+        this.uiController.addEventToLog({
+            title: '融資完了',
+            message: `¥${amount.toLocaleString()}の融資を受け取りました。現在の資金: ¥${this.city.funds.toLocaleString()}`,
+            type: 'event-success',
+            icon: 'hand-holding-usd'
+        });
+    }
+
+    /**
+     * 財務状況を表示する
+     */
+    showFinances() {
+        this.uiController.addEventToLog({
+            title: '財務状況',
+            message: `現在の資金: ¥${this.city.funds.toLocaleString()}`,
+            type: 'event-info',
+            icon: 'file-invoice-dollar'
+        });
+    }
+
+    /**
+     * 教育政策を実行する
+     */
+    applyEducationPolicy() {
+        const cost = 500;
+        if (this.city.funds < cost) {
+            return { success: false, message: `資金が不足しています。必要金額: ¥${cost}` };
+        }
+        this.city.funds -= cost;
+        this.city.education = Math.min(100, this.city.education + 10);
+        return { success: true, message: `教育レベルが10%向上しました。残り資金: ¥${this.city.funds.toLocaleString()}` };
+    }
+
+    /**
+     * 環境政策を実行する
+     */
+    applyEnvironmentPolicy() {
+        const cost = 500;
+        if (this.city.funds < cost) {
+            return { success: false, message: `資金が不足しています。必要金額: ¥${cost}` };
+        }
+        this.city.funds -= cost;
+        this.city.environment = Math.min(100, this.city.environment + 10);
+        return { success: true, message: `環境レベルが10%向上しました。残り資金: ¥${this.city.funds.toLocaleString()}` };
+    }
+
+    /**
+     * 安全政策を実行する
+     */
+    applySafetyPolicy() {
+        const cost = 300;
+        if (this.city.funds < cost) {
+            return { success: false, message: `資金が不足しています。必要金額: ¥${cost}` };
+        }
+        this.city.funds -= cost;
+        this.city.happiness = Math.min(100, this.city.happiness + 5);
+        return { success: true, message: `市民の安全性が向上し、幸福度が5%増加しました。残り資金: ¥${this.city.funds.toLocaleString()}` };
+    }
+
     /**
      * UIイベントリスナーを設定する
      * @private
@@ -262,9 +338,32 @@ export class GameController {
         // 地区アクション選択 (詳細表示など)
         this.uiController.events.on('districtActionSelected', ({ action, districtId }) => {
             if (action === 'view-district') {
+                // 地区詳細表示
+                this.uiController.showDistrictDetails(districtId);
+            } else if (action === 'add-building') {
+                // 建物追加ダイアログ表示
+                this.uiController.showAddBuildingDialog(districtId);
+            } else if (action === 'upgrade-district') {
+                // 地区アップグレード
+                const result = this.upgradeDistrict(districtId);
+                if (result.success) {
+                    this.uiController.addEventToLog({
+                        title: '地区アップグレード完了',
+                        message: result.message,
+                        type: 'event-success',
+                        icon: 'arrow-up'
+                    });
+                } else {
+                    this.uiController.addEventToLog({
+                        title: '地区アップグレード失敗',
+                        message: result.message,
+                        type: 'event-danger',
+                        icon: 'exclamation-circle'
+                    });
+                }
+                // 詳細をリフレッシュ
                 this.uiController.showDistrictDetails(districtId);
             }
-            // TODO: handle other district actions (add-building, upgrade-district) if needed
         });
 
         // 統計データエクスポートリクエスト
@@ -358,6 +457,49 @@ export class GameController {
                 break;
             case 'create_district':
                 this._showCreateDistrictDialog();
+                break;
+            case 'request_loan':
+                this.requestLoan();
+                break;
+            case 'show_finances':
+                this.showFinances();
+                break;
+            case 'education_policy': {
+                const res = this.applyEducationPolicy();
+                this.uiController.addEventToLog({
+                    title: res.success ? '教育政策実行' : '教育政策失敗',
+                    message: res.message,
+                    type: res.success ? 'event-success' : 'event-danger',
+                    icon: res.success ? 'graduation-cap' : 'exclamation-circle'
+                });
+                break;
+            }
+            case 'environment_policy': {
+                const res = this.applyEnvironmentPolicy();
+                this.uiController.addEventToLog({
+                    title: res.success ? '環境政策実行' : '環境政策失敗',
+                    message: res.message,
+                    type: res.success ? 'event-success' : 'event-danger',
+                    icon: res.success ? 'leaf' : 'exclamation-circle'
+                });
+                break;
+            }
+            case 'safety_policy': {
+                const res = this.applySafetyPolicy();
+                this.uiController.addEventToLog({
+                    title: res.success ? '安全政策実行' : '安全政策失敗',
+                    message: res.message,
+                    type: res.success ? 'event-success' : 'event-danger',
+                    icon: res.success ? 'shield-alt' : 'exclamation-circle'
+                });
+                break;
+            }
+            case 'show_stats_charts':
+                // グラフ表示切替
+                this.uiController._toggleStatsCharts();
+                break;
+            case 'export_stats':
+                this.exportStatistics();
                 break;
             // 他のアクション
             default:
@@ -552,11 +694,15 @@ export class GameController {
         const result = saveManager.loadGame();
         
         if (result.success) {
-            // 読み込んだデータでモデルを更新
+            // 都市データを復元
             this.city = result.city;
-            
-            // クリッカーデータは ClickerGameComponent が loadState で復元
-            
+            // Update UIController to use new city reference
+            this.uiController.city = this.city;
+            if (this.uiController.cityMapView) {
+                this.uiController.cityMapView.city = this.city;
+                this.uiController.cityMapView.update();
+            }
+
             if (result.timeManager) {
                 // 時間マネージャーのプロパティを更新
                 this.timeManager.setTime({
@@ -576,7 +722,11 @@ export class GameController {
             // UIを更新
             this.uiController.updateAllStatDisplays();
             this.uiController.updateClock();
-            
+            // Refresh map and details to reflect correct funds
+            if (this.uiController.cityMapView) {
+                this.uiController.cityMapView.update();
+            }
+
             // 読み込み完了通知
             this.loaded = true;
             this.events.emit('gameLoaded', {

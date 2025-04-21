@@ -42,8 +42,8 @@ export class UIController {
             environmentBar: document.getElementById('environment-bar'),
             educationBar: document.getElementById('education-bar'),
             
-            // ゲームログ
-            gameOutput: document.getElementById('game-output'),
+            // ゲームログ (サイドバーに移動したので両方対応)
+            gameOutput: document.getElementById('game-output') || document.getElementById('game-output-sidebar'),
             fixedEvents: document.getElementById('fixed-events'),
             
             // タブと操作ボタン
@@ -64,7 +64,7 @@ export class UIController {
             
             // 統計グラフ
             statsChartsContainer: document.getElementById('stats-charts-container'),
-            chartDisplay: document.getElementById('chart-display'),
+            chartCanvas: document.getElementById('chart-canvas'),
             chartTabs: document.querySelectorAll('.chart-tab')
         };
         
@@ -81,6 +81,8 @@ export class UIController {
         this._initializeUI();
         this._setupEventListeners();
         this._setupCityChangeListeners();
+        // 初回の地区リスト表示
+        this._renderDistrictList();
     }
     
     /**
@@ -291,6 +293,8 @@ export class UIController {
                 tab.addEventListener('click', () => {
                     const chartType = tab.getAttribute('data-chart');
                     this._switchChartTab(chartType);
+                    // グラフをレンダリング
+                    this._renderChart(chartType);
                 });
             });
         }
@@ -384,6 +388,7 @@ export class UIController {
             if (firstChartTab) {
                 const chartType = firstChartTab.getAttribute('data-chart');
                 this._switchChartTab(chartType);
+                this._renderChart(chartType);
             }
         }
     }
@@ -405,6 +410,8 @@ export class UIController {
                     if (this.cityMapView) {
                         this.cityMapView.update();
                     }
+                    // 地区リストを更新
+                    this._renderDistrictList();
                     break;
                 // 他のケース
             }
@@ -512,6 +519,27 @@ export class UIController {
         this.elements.gameOutput.insertBefore(eventElement, this.elements.gameOutput.firstChild);
     }
     
+    /**
+     * 固定イベント領域に通知を追加する
+     * @param {Object} event - イベントデータ
+     */
+    addFixedEvent(event) {
+        if (!this.elements.fixedEvents) return;
+        const eventEl = document.createElement('p');
+        eventEl.className = event.type || 'event-info';
+        eventEl.innerHTML = `
+            <i class="fas fa-${event.icon || 'bell'}"></i>
+            <span class="fixed-event-title">${event.title}</span>
+            <span class="fixed-event-message">${event.message}</span>
+        `;
+        // 古い通知を5件まで保持
+        this.elements.fixedEvents.appendChild(eventEl);
+        const children = this.elements.fixedEvents.children;
+        if (children.length > 5) {
+            this.elements.fixedEvents.removeChild(children[0]);
+        }
+    }
+
     /**
      * 地区詳細を表示する
      * @param {string} districtId - 地区ID
@@ -693,17 +721,14 @@ export class UIController {
             const name = document.getElementById('district-name').value;
             const type = document.getElementById('district-type').value;
             
-            // イベント発火
+            // Emit request to create district (GameController will handle cost check)
             this.events.emit('createDistrictRequest', {
-                name: name || null, // 空の場合はnullでデフォルト名を使用
+                name: name || null,
                 type,
                 position: { x, y }
             });
-            // Show and refresh map to reflect new district
-            if (this.cityMapView) {
-                this.elements.cityMap.style.display = 'block';
-                this.cityMapView.update();
-            }
+            
+            // Close dialog
             dialog.remove();
         });
     }
@@ -736,5 +761,71 @@ export class UIController {
                 this.cityMapView.update();
             }
         }
+    }
+
+    /**
+     * 建物追加ダイアログを表示する
+     * @param {string} districtId - 地区ID
+     */
+    showAddBuildingDialog(districtId) {
+        // ユーザーに建物タイプを入力してもらう
+        const type = prompt('地区に追加する建物タイプを入力してください（例: house, factory, road, school, park, hospital）:');
+        if (!type) return;
+        // リクエストを発行
+        this.events.emit('buildInDistrictRequest', { type, districtId });
+        // 地区詳細を再表示
+        this.showDistrictDetails(districtId);
+    }
+
+    /**
+     * 地区リストを表示する
+     * @private
+     */
+    _renderDistrictList() {
+        const container = this.elements.districtsList;
+        if (!container || !this.city) return;
+        container.innerHTML = '';
+        this.city.districts.forEach(district => {
+            const item = document.createElement('div');
+            item.className = 'district-item';
+            item.dataset.id = district.id;
+            item.innerHTML = `
+                <div class="district-icon"><i class="fas fa-${district.type === 'residential' ? 'home' : district.type === 'commercial' ? 'store' : district.type === 'industrial' ? 'industry' : district.type === 'education' ? 'graduation-cap' : 'leaf'}"></i></div>
+                <div class="district-item-content">
+                    <div class="district-name">${district.name}</div>
+                    <div class="district-type">${district.type}</div>
+                </div>
+            `;
+            item.addEventListener('click', () => {
+                // サイドバーから地区詳細表示
+                this.showDistrictDetails(district.id);
+            });
+            container.appendChild(item);
+        });
+    }
+
+    /**
+     * グラフを描画する
+     * @param {string} type - チャートタイプ
+     * @private
+     */
+    _renderChart(type) {
+        if (!window.Chart) return;
+        const canvas = this.elements.chartCanvas;
+        const ctx = canvas ? canvas.getContext('2d') : null;
+        if (!ctx) return;
+        // 統計データ
+        const stats = this.city.statistics[type] || [];
+        const labels = stats.map(s => s.year);
+        const data = stats.map(s => s.value);
+        // 既存チャート破棄
+        if (this.chartInstance) {
+            this.chartInstance.destroy();
+        }
+        this.chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets: [{ label: type, data, borderColor: 'var(--primary-color)', backgroundColor: 'rgba(52,152,219,0.2)', fill: true }] },
+            options: { responsive: true, scales: { x: { title: { display: true, text: '年' }}, y: { title: { display: true, text: type }}} }
+        });
     }
 }

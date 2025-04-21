@@ -159,14 +159,16 @@ export class City {
             };
         }
         
-        // 資金チェック
-        if (this.funds < districtConfig.cost) {
+        // 資金チェック（型を数値化）
+        const currentFunds = Number(this.funds);
+        const requiredCost = Number(districtConfig.cost);
+        if (currentFunds < requiredCost) {
             return {
                 success: false,
-                message: `資金が足りません。必要金額: ¥${districtConfig.cost} | 現在の資金: ¥${this.funds.toLocaleString()}`
+                message: `資金が足りません。必要金額: ¥${requiredCost} | 現在の資金: ¥${currentFunds.toLocaleString()}`
             };
         }
-        
+
         // 地区の作成
         const districtName = options.name || `${districtConfig.name} ${this.districts.length + 1}`;
         const district = new District({
@@ -176,7 +178,7 @@ export class City {
         });
         
         // 資金を引く
-        this.funds -= districtConfig.cost;
+        this.funds = currentFunds - requiredCost;
         
         // 地区を追加
         this.districts.push(district);

@@ -305,8 +305,11 @@ body {
 
 /* ダッシュボード */
 .dashboard {
-    display: flex;
+    /* Three-column layout: stats, main, sidebar */
+    display: grid;
+    grid-template-columns: 300px 1fr 350px;
     gap: 20px;
+    align-items: start;
 }
 
 .city-stats {
@@ -570,7 +573,9 @@ body {
 
 /* 地区システム関連のスタイル */
 .districts-sidebar {
-    width: 250px;
+    /* Wider sidebar for PC view */
+    /* width will be determined by grid template; set max-width */
+    max-width: 350px;
     background-color: white;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
