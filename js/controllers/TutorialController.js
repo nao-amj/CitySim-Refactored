@@ -20,10 +20,16 @@ export class TutorialController {
         this.tutorialOverlay = document.getElementById('tutorial-overlay');
         this.tutorialSteps = document.getElementById('tutorial-steps');
         this.tutorialButtons = document.querySelector('.tutorial-buttons');
-        
+    }
+   
+    /**
+     * Application lifecycle init
+     * @param {Application} app
+     */
+    init(app) {
         this._init();
     }
-    
+
     /**
      * 初期化処理
      * @private

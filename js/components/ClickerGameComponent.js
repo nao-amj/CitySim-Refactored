@@ -218,7 +218,15 @@ export class ClickerGameComponent {
             });
         }
     }
-    
+
+    /**
+     * Application lifecycle init
+     * @param {Application} app
+     */
+    init(app) {
+        this.initialize();
+    }
+
     /**
      * コンポーネントを表示
      */

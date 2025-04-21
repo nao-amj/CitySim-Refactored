@@ -4,7 +4,7 @@
  */
 
 import { GameConfig } from '../config/GameConfig.js';
-import { DistrictsConfig } from '../config/DistrictsConfig.js';
+import { DistrictsConfig, getDistrictTypes } from '../config/DistrictsConfig.js';
 import { BuildingFactory } from '../models/Building.js';
 import { EventEmitter } from '../services/EventEmitter.js';
 import { ClickerController } from './ClickerController.js';
@@ -32,11 +32,17 @@ export class GameController {
         
         // セーブデータロード試行
         this.loaded = false;
-        
-        // UIコントローラーからのイベントをリッスン
+    }
+
+    /**
+     * Application lifecycle init
+     * @param {Application} app
+     */
+    init(app) {
+        // setup UI event listeners
         this._setupUIEventListeners();
     }
-    
+
     /**
      * ゲームを開始する
      */

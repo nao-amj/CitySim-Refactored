@@ -70,8 +70,14 @@ export class UIController {
         
         // CityMapViewをnullで初期化
         this.cityMapView = null;
-        
-        // 初期化
+    }
+    
+    /**
+     * Application lifecycle init
+     * @param {Application} app
+     */
+    init(app) {
+        // initialize UI and listeners
         this._initializeUI();
         this._setupEventListeners();
         this._setupCityChangeListeners();
