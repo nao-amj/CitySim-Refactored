@@ -550,4 +550,14 @@ export class ClickerController {
             });
         }
     }
+
+    /**
+     * Stub: Show clicker UI (no-op fallback)
+     */
+    show() {}
+
+    /**
+     * Stub: Hide clicker UI (no-op fallback)
+     */
+    hide() {}
 }

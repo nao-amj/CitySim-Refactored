@@ -7,7 +7,7 @@ import { GameConfig } from '../config/GameConfig.js';
 import { DistrictsConfig, getDistrictTypes } from '../config/DistrictsConfig.js';
 import { BuildingFactory } from '../models/Building.js';
 import { EventEmitter } from '../services/EventEmitter.js';
-import { ClickerController } from './ClickerController.js';
+// Removed legacy ClickerController import
 
 export class GameController {
     /**
@@ -24,8 +24,7 @@ export class GameController {
         this.uiController = uiController;
         this.events = new EventEmitter();
         
-        // クリッカーコントローラーの初期化
-        this.clickerController = new ClickerController(city, uiController);
+        // クリッカーモードは ClickerGameComponent が担当
         
         // ゲームモード
         this.gameMode = 'city'; // 'city' または 'clicker'
@@ -70,22 +69,8 @@ export class GameController {
         if (mode === this.gameMode) return;
         
         this.gameMode = mode;
-        
-        if (mode === 'clicker') {
-            // クリッカーモードに切り替え
-            this.clickerController.show();
-            // 時間を一時停止（オプション）
-            // this.timeManager.pause();
-            
-            this.events.emit('gameModeChanged', { mode: 'clicker' });
-        } else {
-            // 都市管理モードに切り替え
-            this.clickerController.hide();
-            // 時間を再開（オプション）
-            // this.timeManager.resume();
-            
-            this.events.emit('gameModeChanged', { mode: 'city' });
-        }
+        // Emit mode change for external handlers
+        this.events.emit('gameModeChanged', { mode });
     }
     
     /**
@@ -562,11 +547,7 @@ export class GameController {
             // 読み込んだデータでモデルを更新
             this.city = result.city;
             
-            // クリッカーデータを復元
-            if (result.city.clickerData) {
-                this.clickerController = new ClickerController(this.city, this.uiController);
-                this.clickerController.loadState(saveManager);
-            }
+            // クリッカーデータは ClickerGameComponent が loadState で復元
             
             if (result.timeManager) {
                 // 時間マネージャーのプロパティを更新
@@ -630,10 +611,7 @@ export class GameController {
             };
         }
         
-        // クリッカーデータを保存
-        if (this.clickerController) {
-            this.clickerController.saveState(saveManager);
-        }
+        // クリッカーデータは ClickerGameComponent が saveState で保存
         
         const result = saveManager.saveGame(saveType);
         
@@ -728,8 +706,7 @@ export class GameController {
                 city: this.city,
                 timeManager: this.timeManager,
                 eventSystem: this.eventSystem,
-                uiController: this.uiController,
-                clickerController: this.clickerController
+                uiController: this.uiController
             };
             
             this.uiController.addEventToLog({
