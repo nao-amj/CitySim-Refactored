@@ -44,14 +44,23 @@ document.addEventListener('DOMContentLoaded', () => {
   app.registerController('uiController', uiController);
   app.registerController('gameController', gameController);
   app.registerController('tutorialController', tutorialController);
-  // register components
+  // setup ClickerGameComponent (manually show/hide via game mode)
   const clickerComp = new ClickerGameComponent(city, uiController);
-  app.registerComponent('clickerGame', clickerComp);
+
   // lifecycle: init and start
   app.init();
   // load saved game
   gameController.loadGame(saveManager);
   app.start();
+  // Show/hide clicker overlay on mode change
+  eventSystem.events.on('eventTriggered', () => {}); // no-op to ensure eventSystem referenced
+  gameController.events.on('gameModeChanged', ({ mode }) => {
+    if (mode === 'clicker') {
+      clickerComp.show();
+    } else {
+      clickerComp.hide();
+    }
+  });
   // auto-save on unload
   window.addEventListener('beforeunload', () => saveManager.saveGame('auto'));
   // debug global
