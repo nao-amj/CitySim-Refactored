@@ -259,6 +259,14 @@ export class GameController {
             this.switchGameMode('city');
         });
         
+        // 地区アクション選択 (詳細表示など)
+        this.uiController.events.on('districtActionSelected', ({ action, districtId }) => {
+            if (action === 'view-district') {
+                this.uiController.showDistrictDetails(districtId);
+            }
+            // TODO: handle other district actions (add-building, upgrade-district) if needed
+        });
+
         // 統計データエクスポートリクエスト
         this.uiController.events.on('exportStatsRequest', () => {
             this.exportStatistics();
