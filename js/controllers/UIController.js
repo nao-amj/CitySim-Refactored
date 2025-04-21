@@ -261,7 +261,8 @@ export class UIController {
             this.elements.districtsActions.querySelectorAll('.action-btn').forEach(button => {
                 button.addEventListener('click', () => {
                     const action = button.getAttribute('data-action');
-                    if (action === 'show_city_map') {
+                    // Toggle map display for both show and manage actions
+                    if (action === 'show_city_map' || action === 'manage_districts') {
                         this._toggleCityMap();
                     } else {
                         this.events.emit('actionSelected', { action });
@@ -698,7 +699,11 @@ export class UIController {
                 type,
                 position: { x, y }
             });
-            
+            // Show and refresh map to reflect new district
+            if (this.cityMapView) {
+                this.elements.cityMap.style.display = 'block';
+                this.cityMapView.update();
+            }
             dialog.remove();
         });
     }
