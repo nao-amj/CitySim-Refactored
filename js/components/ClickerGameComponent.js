@@ -279,27 +279,9 @@ export class ClickerGameComponent {
         // クリックターゲットのイベントリスナー
         const clickTarget = doc.getElementById('clicker-target');
         if (clickTarget) {
-            // モバイルデバイスかどうかでイベントを分ける
-            if (this.isMobile) {
-                clickTarget.addEventListener('touchstart', (e) => {
-                    // クリックイベントをコントローラに伝える
-                    e.preventDefault(); // モバイルでの余計な動作を防止
-                });
-                
-                clickTarget.addEventListener('touchend', (e) => {
-                    // クリックイベントをコントローラに伝える
-                    if (this.controller) {
-                        const touch = e.changedTouches[0];
-                        this.controller.handleClickFromComponent({
-                            clientX: touch.clientX,
-                            clientY: touch.clientY
-                        });
-                    }
-                    e.preventDefault(); // モバイルでの余計な動作を防止
-                });
-            } else {
+            // Bind desktop click only; mobile touch handled by controller
+            if (!this.isMobile) {
                 clickTarget.addEventListener('click', (e) => {
-                    // クリックイベントをコントローラに伝える
                     if (this.controller) {
                         this.controller.handleClickFromComponent(e);
                     }

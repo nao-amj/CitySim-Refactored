@@ -23,6 +23,7 @@ export class EnhancedClickerController {
         // Clicker status
         this.state = {
             totalClicks: 0,
+            prestigeLevel: 0,
             totalFunds: 0,
             clickValue: GameConfig.CLICKER.BASE_CLICK_VALUE,
             autoFunds: 0,
@@ -74,6 +75,8 @@ export class EnhancedClickerController {
         } else {
             this.state = this.city.clickerData;
         }
+
+        this.eventBonusActive = false;
     }
     
     /**
@@ -105,12 +108,34 @@ export class EnhancedClickerController {
         // Preload sounds
         this._preloadSounds();
         
+        // Start event bonus loop
+        this._startEventBonusLoop();
         this.initialized = true;
         
         // Emit initialization completed event
         this.events.emit('clickerInitialized', {
             state: { ...this.state }
         });
+    }
+
+    /**
+     * Start periodic event bonus checks
+     * @private
+     */
+    _startEventBonusLoop() {
+        const cfg = GameConfig.CLICKER.EVENT_BONUS;
+        setInterval(() => {
+            if (this.eventBonusActive) return;
+            if (Math.random() < cfg.CHANCE) {
+                this.eventBonusActive = true;
+                this.events.emit('eventBonusStarted', { multiplier: cfg.MULTIPLIER, duration: cfg.DURATION });
+                // End after duration
+                setTimeout(() => {
+                    this.eventBonusActive = false;
+                    this.events.emit('eventBonusEnded');
+                }, cfg.DURATION);
+            }
+        }, cfg.INTERVAL);
     }
     
     /**
@@ -149,6 +174,7 @@ export class EnhancedClickerController {
         this._renderUpgrades();
         this._renderAchievements();
         this._updateStats();
+        this._initPrestigeUI();
         
         // Canvas for particles (optional)
         const particleCanvas = this.document.createElement('canvas');
@@ -175,6 +201,53 @@ export class EnhancedClickerController {
                 this.particleCanvas.height = this.clickerElement.offsetHeight || 600;
             }
         });
+    }
+
+    /**
+     * Initialize Prestige UI
+     * @private
+     */
+    _initPrestigeUI() {
+        const threshold = GameConfig.CLICKER.PRESTIGE.THRESHOLD;
+        const container = this.document.createElement('div');
+        container.id = 'prestige-section';
+        const btn = this.document.createElement('button');
+        btn.id = 'prestige-btn';
+        btn.textContent = `転生 (リセット) - 要件: ¥${threshold.toLocaleString()}`;
+        btn.disabled = this.city.funds < threshold;
+        btn.addEventListener('click', this._performPrestige.bind(this));
+        container.appendChild(btn);
+        this.clickerStats.appendChild(container);
+    }
+
+    /**
+     * Perform Prestige (reset with permanent bonus)
+     * @private
+     */
+    _performPrestige() {
+        const cfg = GameConfig.CLICKER.PRESTIGE;
+        if (this.city.funds < cfg.THRESHOLD) return;
+        // Increment prestige level
+        this.state.prestigeLevel++;
+        // Apply permanent bonus to allMultiplier
+        this.state.allMultiplier *= (1 + cfg.BONUS_RATE);
+        // Reset progress
+        this.city.funds = 0;
+        this.state.totalClicks = 0;
+        this.state.buildings = {};
+        this.state.upgrades = {};
+        this.state.achievements = {};
+        this.state.unlocked = { COIN_MINT: false, BANK: false, INVESTMENT_FIRM: false };
+        // Update UI
+        this._renderBuildings();
+        this._renderUpgrades();
+        this._renderAchievements();
+        this._updateStats();
+        // Update prestige button
+        const btn = this.document.getElementById('prestige-btn');
+        if (btn) btn.disabled = true;
+        // Emit prestige event
+        this.events.emit('prestiged', { level: this.state.prestigeLevel });
     }
     
     /**
@@ -271,7 +344,7 @@ export class EnhancedClickerController {
         
         // Calculate earned funds
         const clickEffect = this.state.clickValue * this.state.clickMultiplier * this.state.allMultiplier;
-        const fundsGained = Math.floor(clickEffect);
+        const fundsGained = Math.floor(clickEffect * (this.eventBonusActive ? GameConfig.CLICKER.EVENT_BONUS.MULTIPLIER : 1));
         
         // Add funds
         this.city.funds += fundsGained;
@@ -429,10 +502,10 @@ export class EnhancedClickerController {
         // Set auto income timer
         this.autoIncomeTimer = setInterval(() => {
             if (this.state.autoFunds > 0) {
-                // Calculate auto income
-                const autoIncome = Math.floor(
+                const baseIncome = Math.floor(
                     this.state.autoFunds * this.state.autoFundsMultiplier * this.state.allMultiplier
                 );
+                const autoIncome = Math.floor(baseIncome * (this.eventBonusActive ? GameConfig.CLICKER.EVENT_BONUS.MULTIPLIER : 1));
                 
                 // Add funds
                 this.city.funds += autoIncome;
@@ -1014,13 +1087,21 @@ export class EnhancedClickerController {
         // Update total earned funds
         const totalEarnedEl = this.document.getElementById('total-earned');
         if (totalEarnedEl) {
-            totalEarnedEl.textContent = GameText.CLICKER.TOTAL_EARNED.replace('{value}', this.state.totalFunds.toLocaleString());
+            const earned = GameText.CLICKER.TOTAL_EARNED.replace('{value}', this.city.funds.toLocaleString());
+            totalEarnedEl.textContent = earned;
         }
         
         // Update total clicks
         const totalClicksEl = this.document.getElementById('total-clicks');
         if (totalClicksEl) {
             totalClicksEl.textContent = GameText.CLICKER.TOTAL_CLICKS.replace('{value}', this.state.totalClicks.toLocaleString());
+        }
+        
+        // Update prestige button state
+        const cfg = GameConfig.CLICKER.PRESTIGE;
+        const pBtn = this.document.getElementById('prestige-btn');
+        if (pBtn) {
+            pBtn.disabled = this.city.funds < cfg.THRESHOLD;
         }
         
         // Update achievement progress bars
@@ -1067,10 +1148,10 @@ export class EnhancedClickerController {
         
         if (financialGeniusProgress && financialGeniusText) {
             const requirement = GameConfig.CLICKER.ACHIEVEMENTS.FINANCIAL_GENIUS.requirement.totalFunds;
-            const progress = Math.min(100, (this.state.totalFunds / requirement) * 100);
+            const progress = Math.min(100, (this.city.funds / requirement) * 100);
             
             financialGeniusProgress.style.width = `${progress}%`;
-            financialGeniusText.textContent = `¥${this.state.totalFunds.toLocaleString()} / ¥${requirement.toLocaleString()}`;
+            financialGeniusText.textContent = `¥${this.city.funds.toLocaleString()} / ¥${requirement.toLocaleString()}`;
         }
     }
     
@@ -1365,9 +1446,9 @@ export class EnhancedClickerController {
                 </div>
                 <div class="clicker-item-progress">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${Math.min(100, (this.state.totalFunds / financialGenius.requirement.totalFunds) * 100)}%"></div>
+                        <div class="progress-fill" style="width: ${Math.min(100, (this.city.funds / financialGenius.requirement.totalFunds) * 100)}%"></div>
                     </div>
-                    <span>¥${this.state.totalFunds.toLocaleString()} / ¥${financialGenius.requirement.totalFunds.toLocaleString()}</span>
+                    <span>¥${this.city.funds.toLocaleString()} / ¥${financialGenius.requirement.totalFunds.toLocaleString()}</span>
                 </div>
             </div>
         `;

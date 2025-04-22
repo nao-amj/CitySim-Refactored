@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ヘッダーのメニュー切り替えボタン
     const headerMenuBtn = document.getElementById('toggle-menu');
     if (headerMenuBtn) {
-        headerMenuBtn.addEventListener('click', toggleStats);
+        headerMenuBtn.addEventListener('click', toggleMobileMenu);
     }
     
     // ウィンドウのリサイズ時にモバイル最適化を再適用
@@ -421,15 +421,9 @@ function toggleMobileMenu() {
     mobileMenu.id = 'mobile-quick-menu';
     mobileMenu.className = 'mobile-quick-menu';
     
-    // メニューのスタイル設定
+    // メニューのスタイル設定（位置はあとで計算）
     Object.assign(mobileMenu.style, {
-        position: 'fixed',
-        bottom: '80px',
-        right: '20px',
-        backgroundColor: 'white',
-        borderRadius: '10px',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
-        padding: '10px',
+        position: 'absolute',
         zIndex: '1000',
         display: 'flex',
         flexDirection: 'column',
@@ -485,6 +479,18 @@ function toggleMobileMenu() {
     });
     
     document.body.appendChild(mobileMenu);
+    
+    // メニューをトグルボタンの上に配置（モバイルボタンかヘッダーボタンがアンカー）
+    let anchorBtn = document.getElementById('mobile-menu-toggle') || document.getElementById('toggle-menu');
+    if (anchorBtn) {
+        const btnRect = anchorBtn.getBoundingClientRect();
+        const menuRect = mobileMenu.getBoundingClientRect();
+        // 中央揃えで上に配置
+        const leftPos = btnRect.left + (btnRect.width / 2) - (menuRect.width / 2);
+        const topPos = btnRect.top - menuRect.height - 8;
+        mobileMenu.style.left = `${Math.max(8, leftPos)}px`;
+        mobileMenu.style.top = `${Math.max(8, topPos)}px`;
+    }
     
     // 画面外タップでメニューを閉じる
     setTimeout(() => {

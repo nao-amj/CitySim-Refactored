@@ -30,8 +30,11 @@ export class UIController {
             fundsValue: document.querySelectorAll('.funds-value'),
             districtsCount: document.querySelectorAll('.districts-count'),
             housesValue: document.querySelector('.houses-value'),
-            factoriesValue: document.querySelector('.factories-value'),
+            factoriesValue: document.querySelectorAll('.factories-value') || document.querySelector('.factories-value'),
             roadsValue: document.querySelector('.roads-value'),
+            parksValue: document.querySelector('.parks-value'),
+            schoolsValue: document.querySelector('.schools-value'),
+            hospitalsValue: document.querySelector('.hospitals-value'),
             happinessValue: document.querySelector('.happiness-value'),
             environmentValue: document.querySelector('.environment-value'),
             educationValue: document.querySelector('.education-value'),
@@ -455,6 +458,15 @@ export class UIController {
         
         if (this.elements.roadsValue) {
             this.elements.roadsValue.textContent = this.city.buildings && this.city.buildings.road ? this.city.buildings.road : 0;
+        }
+        if (this.elements.parksValue) {
+            this.elements.parksValue.textContent = this.city.buildings && this.city.buildings.park ? this.city.buildings.park : 0;
+        }
+        if (this.elements.schoolsValue) {
+            this.elements.schoolsValue.textContent = this.city.buildings && this.city.buildings.school ? this.city.buildings.school : 0;
+        }
+        if (this.elements.hospitalsValue) {
+            this.elements.hospitalsValue.textContent = this.city.buildings && this.city.buildings.hospital ? this.city.buildings.hospital : 0;
         }
         
         if (this.elements.happinessValue) {

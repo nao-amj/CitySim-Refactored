@@ -134,6 +134,11 @@ export const GameConfig = {
             BANK: 500, // 銀行の解放に必要な合計獲得資金
             INVESTMENT_FIRM: 2000 // 投資会社の解放に必要な合計獲得資金
         },
+        // コンボマルチプライヤー設定
+        COMBO: {
+            BONUS_RATE: 0.05,   // コンボ1回あたり5%増加
+            DURATION: 3000      // 最後のクリック後3秒でコンボリセット
+        },
         UPGRADES: {
             BETTER_TOOLS: {
                 name: "改良ツール",
@@ -179,7 +184,21 @@ export const GameConfig = {
                 bonus: { fundMultiplier: 0.1 },
                 description: "総資金額10,000に到達する"
             }
-        }
+        },
+        // 転生（プレステージ）機能設定
+        PRESTIGE: {
+            THRESHOLD: 100000,      // 転生可能になる総獲得資金
+            BONUS_RATE: 0.1         // 転生ごとの永久ボーナス倍率（全収入 +10%）
+        },
+        // イベントボーナス（期間限定2倍）
+        EVENT_BONUS: {
+            CHANCE: 0.1,       // 期間発生確率（インターバルごと）
+            INTERVAL: 60000,   // チャック間隔（ミリ秒）
+            DURATION: 10000,   // 持続時間（ミリ秒）
+            MULTIPLIER: 2      // 収入倍率
+        },
+        // モバイル最適化版クリッカーの利用設定
+        MOBILE_OPTIMIZED_ENABLED: true
     },
     
     // 政策関連設定

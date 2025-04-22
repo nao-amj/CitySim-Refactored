@@ -21,6 +21,9 @@ button,
 
 /* スマホサイズでのダッシュボードレイアウト調整 */
 @media (max-width: 768px) {
+    html, body {
+        overflow-x: hidden;
+    }
     .dashboard {
         display: flex;
         flex-direction: column;
@@ -127,6 +130,34 @@ button,
     /* チャート表示の最適化 */
     .chart-container {
         height: 200px;
+    }
+
+    /* モバイルでの都市マップ表示調整と通知位置改善 */
+    /* 城市マップが画面幅をはみ出さないように横スクロール可能に */
+    .city-map {
+        width: 100%;
+        overflow-x: auto;
+    }
+    .city-map-grid {
+        grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+    }
+
+    /* 通知エリアを画面下部に固定表示 */
+    .notifications-area {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 400px;
+        margin: 0;
+        z-index: 1100;
+    }
+
+    /* Ensure clicker component and mobile view use full viewport width */
+    .clicker-game-component,
+    .mobile-view {
+        width: 100vw;
     }
 }
 

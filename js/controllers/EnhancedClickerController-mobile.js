@@ -6,6 +6,7 @@
 
 import { GameConfig, GameText } from '../config/GameConfig.js';
 import { EventEmitter } from '../services/EventEmitter.js';
+import { EnhancedClickerController as BaseController } from './EnhancedClickerController.js';
 
 export class EnhancedClickerController {
     /**
@@ -30,7 +31,6 @@ export class EnhancedClickerController {
         // Clicker status
         this.state = {
             totalClicks: 0,
-            totalFunds: 0,
             clickValue: GameConfig.CLICKER.BASE_CLICK_VALUE,
             autoFunds: 0,
             clickMultiplier: 1,
@@ -81,6 +81,10 @@ export class EnhancedClickerController {
         this.touchStartY = 0;
         this.multiTouchActive = false;
         this.lastTapTime = 0;
+        
+        // Combo system
+        this.comboCount = 0;
+        this.lastClickTimestamp = 0;
         
         // Link clicker data to city model
         if (!this.city.clickerData) {
@@ -612,22 +616,34 @@ export class EnhancedClickerController {
      * @private
      */
     _handleClick(e) {
+        // コンボ計算: 前回クリックから一定時間内なら継続、そうでなければリセット
+        const now = Date.now();
+        const comboCfg = GameConfig.CLICKER.COMBO;
+        if (now - this.lastClickTimestamp <= comboCfg.DURATION) {
+            this.comboCount++;
+        } else {
+            this.comboCount = 0;
+        }
+        this.lastClickTimestamp = now;
+        const comboMultiplier = 1 + this.comboCount * comboCfg.BONUS_RATE;
+        
         // Update click count
         this.state.totalClicks++;
         
-        // Calculate earned funds
-        const clickEffect = this.state.clickValue * this.state.clickMultiplier * this.state.allMultiplier;
+        // Calculate earned funds with combo
+        const baseEffect = this.state.clickValue * this.state.clickMultiplier * this.state.allMultiplier;
+        const clickEffect = Math.floor(baseEffect * comboMultiplier);
+
         const fundsGained = Math.floor(clickEffect);
-        
+
         // Add funds
         this.city.funds += fundsGained;
-        this.state.totalFunds += fundsGained;
         
         // Check building unlocks
-        this._checkBuildingUnlocks();
+        this._checkBuildingUnlocks(this.city.funds);
         
         // Check achievements
-        this._checkAchievements();
+        this._checkAchievements(this.city.funds);
         
         // Update UI
         this._updateStats();
@@ -808,13 +824,12 @@ export class EnhancedClickerController {
                 
                 // Add funds
                 this.city.funds += autoIncome;
-                this.state.totalFunds += autoIncome;
                 
                 // Check building unlocks
-                this._checkBuildingUnlocks();
+                this._checkBuildingUnlocks(this.city.funds);
                 
                 // Check achievements
-                this._checkAchievements();
+                this._checkAchievements(this.city.funds);
                 
                 // Update UI
                 this._updateStats();
@@ -892,7 +907,7 @@ export class EnhancedClickerController {
      */
     _checkBuildingUnlocks() {
         // Coin Mint unlock
-        if (!this.state.unlocked.COIN_MINT && this.state.totalFunds >= GameConfig.CLICKER.UNLOCK_THRESHOLDS.COIN_MINT) {
+        if (!this.state.unlocked.COIN_MINT && this.city.funds >= GameConfig.CLICKER.UNLOCK_THRESHOLDS.COIN_MINT) {
             this.state.unlocked.COIN_MINT = true;
             this._renderBuildings();
             
@@ -907,7 +922,7 @@ export class EnhancedClickerController {
         }
         
         // Bank unlock
-        if (!this.state.unlocked.BANK && this.state.totalFunds >= GameConfig.CLICKER.UNLOCK_THRESHOLDS.BANK) {
+        if (!this.state.unlocked.BANK && this.city.funds >= GameConfig.CLICKER.UNLOCK_THRESHOLDS.BANK) {
             this.state.unlocked.BANK = true;
             this._renderBuildings();
             
@@ -922,7 +937,7 @@ export class EnhancedClickerController {
         }
         
         // Investment Firm unlock
-        if (!this.state.unlocked.INVESTMENT_FIRM && this.state.totalFunds >= GameConfig.CLICKER.UNLOCK_THRESHOLDS.INVESTMENT_FIRM) {
+        if (!this.state.unlocked.INVESTMENT_FIRM && this.city.funds >= GameConfig.CLICKER.UNLOCK_THRESHOLDS.INVESTMENT_FIRM) {
             this.state.unlocked.INVESTMENT_FIRM = true;
             this._renderBuildings();
             
@@ -1030,7 +1045,7 @@ export class EnhancedClickerController {
         }
         
         // Financial Genius
-        if (!this.state.achievements.FINANCIAL_GENIUS && this.state.totalFunds >= GameConfig.CLICKER.ACHIEVEMENTS.FINANCIAL_GENIUS.requirement.totalFunds) {
+        if (!this.state.achievements.FINANCIAL_GENIUS && this.city.funds >= GameConfig.CLICKER.ACHIEVEMENTS.FINANCIAL_GENIUS.requirement.totalFunds) {
             this.state.achievements.FINANCIAL_GENIUS = true;
             
             // Apply bonus
@@ -1215,6 +1230,85 @@ export class EnhancedClickerController {
         };
     }
     
+    /**
+     * Render buildings list
+     * @private
+     */
+    _renderBuildings() {
+        BaseController.prototype._renderBuildings.call(this);
+        // Mobile touch support for building purchase
+        if (this.isMobile && this.buildingsContainer) {
+            this.buildingsContainer.querySelectorAll('.clicker-item-btn').forEach(btn => {
+                btn.addEventListener('touchend', e => {
+                    e.preventDefault();
+                    const type = btn.getAttribute('data-building');
+                    this._buyBuilding(type);
+                }, { passive: false });
+            });
+        }
+    }
+
+    /**
+     * Render upgrades list
+     * @private
+     */
+    _renderUpgrades() {
+        BaseController.prototype._renderUpgrades.call(this);
+        // Mobile touch support for upgrade purchase
+        if (this.isMobile && this.upgradesContainer) {
+            this.upgradesContainer.querySelectorAll('.clicker-item-btn').forEach(btn => {
+                btn.addEventListener('touchend', e => {
+                    e.preventDefault();
+                    const id = btn.getAttribute('data-upgrade');
+                    this._buyUpgrade(id);
+                }, { passive: false });
+            });
+        }
+    }
+
+    /**
+     * Render achievements list
+     * @private
+     */
+    _renderAchievements() {
+        BaseController.prototype._renderAchievements.call(this);
+    }
+
+    /**
+     * Update clicker stats for mobile UI
+     * @private
+     */
+    _updateStats() {
+        if (!this.clickerStats) return;
+        const doc = this.document;
+        const earnedEl = doc.getElementById('total-earned');
+        if (earnedEl) {
+            earnedEl.textContent = `総獲得資金: ¥${this.city.funds.toLocaleString()}`;
+        }
+        const clicksEl = doc.getElementById('total-clicks');
+        if (clicksEl) {
+            clicksEl.textContent = `総クリック数: ${this.state.totalClicks.toLocaleString()}回`;
+        }
+    }
+    
+    /**
+     * Buy building (delegate to desktop controller)
+     * @param {string} buildingType
+     * @private
+     */
+    _buyBuilding(buildingType) {
+        BaseController.prototype._buyBuilding.call(this, buildingType);
+    }
+
+    /**
+     * Buy upgrade (delegate to desktop controller)
+     * @param {string} upgradeId
+     * @private
+     */
+    _buyUpgrade(upgradeId) {
+        BaseController.prototype._buyUpgrade.call(this, upgradeId);
+    }
+
     /**
      * Buy building (残りのメソッド省略 - 実際の実装時には完全にコピー)
      */

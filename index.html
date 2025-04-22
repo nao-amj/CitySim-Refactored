@@ -15,6 +15,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
+    <!-- Chart.js for Data Dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header class="game-header hardware-accelerated">
@@ -286,6 +288,13 @@
     
     <!-- パーティクルエフェクトコンテナ -->
     <div id="particles-container" class="particles-container"></div>
+
+    <!-- Scenario Editor UI Container -->
+    <div id="scenario-editor-container" class="hidden"></div>
+    <!-- Data Dashboard UI Container -->
+    <div id="data-dashboard-container" class="hidden"></div>
+    <!-- Plugin scripts can be included here -->
+    <!-- <script src="js/plugins/yourPlugin.js" data-plugin></script> -->
 
     <!-- モバイルアクセスメニュー -->
     <button id="mobile-menu-toggle" class="mobile-menu-toggle tap-highlight">
