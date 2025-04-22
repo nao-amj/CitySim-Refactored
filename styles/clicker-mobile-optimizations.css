@@ -1,0 +1,435 @@
+/* CitySim クリッカーゲーム モバイル最適化用スタイル */
+
+/* モバイル向け基本設定 */
+@media (max-width: 768px) {
+    /* クリッカーコンテナの最適化 */
+    .clicker-container {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* ヘッダーの固定 */
+    .clicker-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        height: auto;
+        min-height: 60px;
+        padding: 12px 15px;
+        display: flex;
+        flex-wrap: wrap;
+    }
+    
+    .clicker-header h2 {
+        font-size: 1.2rem;
+        margin-right: 10px;
+    }
+    
+    .clicker-header p {
+        font-size: 0.8rem;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 0 0 100%;
+        margin-top: 5px;
+    }
+    
+    .clicker-exit-btn {
+        position: absolute;
+        top: 12px;
+        right: 15px;
+    }
+    
+    /* メインコンテンツエリアの調整 */
+    .clicker-content {
+        padding: 15px 10px;
+        gap: 15px;
+    }
+    
+    /* メインクリッカーエリアの最適化 */
+    .clicker-main {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    /* クリックターゲットコンテナの最適化 */
+    .clicker-target-container {
+        min-height: 180px;
+        border-radius: 12px;
+    }
+    
+    /* クリックターゲットの調整 */
+    .clicker-target {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .clicker-target i {
+        font-size: 48px;
+    }
+    
+    /* タッチ時のフィードバック改善 */
+    .clicker-target:active {
+        transform: scale(0.95);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 20px rgba(52, 152, 219, 0.4);
+    }
+    
+    /* クリッカーステータスの最適化 */
+    .clicker-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .clicker-stat {
+        padding: 12px;
+    }
+    
+    .clicker-stat i {
+        font-size: 1.3rem;
+        margin-bottom: 8px;
+    }
+    
+    .clicker-stat span {
+        font-size: 0.9rem;
+    }
+    
+    /* クリッカーセクションのモバイル最適化 */
+    .clicker-sections {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .clicker-section {
+        padding: 15px;
+    }
+    
+    .clicker-section h3 {
+        font-size: 1.1rem;
+        padding-bottom: 8px;
+    }
+    
+    /* セクション内のアイテムリストの最適化 */
+    .clicker-buildings, 
+    .clicker-upgrades, 
+    .clicker-achievements {
+        max-height: 300px;
+    }
+    
+    /* クリッカーアイテムの最適化 */
+    .clicker-item {
+        padding: 12px;
+        gap: 12px;
+    }
+    
+    .clicker-item-icon {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .clicker-item-icon i {
+        font-size: 1.1rem;
+    }
+    
+    .clicker-item-name {
+        font-size: 0.95rem;
+    }
+    
+    .clicker-item-desc {
+        font-size: 0.85rem;
+    }
+    
+    .clicker-item-effect span {
+        font-size: 0.75rem;
+        padding: 2px 6px;
+    }
+    
+    /* ボタンタッチ領域拡大 */
+    .clicker-item-btn {
+        padding: 12px;
+        min-width: 80px;
+    }
+    
+    /* タッチフィードバック強化 */
+    .clicker-item-btn:active {
+        transform: scale(0.98);
+        background-color: var(--dark-color);
+    }
+    
+    /* スクロール最適化 */
+    .clicker-buildings, 
+    .clicker-upgrades, 
+    .clicker-achievements {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .clicker-buildings::-webkit-scrollbar, 
+    .clicker-upgrades::-webkit-scrollbar, 
+    .clicker-achievements::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* 小型スマホ向け追加最適化 */
+@media (max-width: 480px) {
+    /* ヘッダーをさらにコンパクトに */
+    .clicker-header h2 {
+        font-size: 1.1rem;
+    }
+    
+    .clicker-header p {
+        display: none;
+    }
+    
+    /* クリックターゲットをさらに調整 */
+    .clicker-target-container {
+        min-height: 150px;
+    }
+    
+    .clicker-target {
+        width: 110px;
+        height: 110px;
+    }
+    
+    .clicker-target i {
+        font-size: 42px;
+    }
+    
+    /* ステータス表示の調整 */
+    .clicker-stats {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .clicker-stat {
+        padding: 10px;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .clicker-stat i {
+        margin-bottom: 0;
+        margin-right: 8px;
+    }
+    
+    /* アイテム表示の調整 */
+    .clicker-item {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .clicker-item-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .clicker-item-btn {
+        flex: 0 0 100%;
+        margin-top: 8px;
+        margin-left: 46px; /* アイコン幅 + 右マージン */
+    }
+}
+
+/* パーティクルエフェクトの最適化 */
+@media (max-width: 768px) {
+    /* パフォーマンス向上のためパーティクルを削減 */
+    .clicker-container.mobile-view .target-particle,
+    .clicker-container.mobile-view .click-particle {
+        animation-duration: 0.8s;
+    }
+    
+    /* 旧デバイスではパーティクルを無効化 */
+    .low-performance-device .target-particle,
+    .low-performance-device .click-particle {
+        display: none;
+    }
+}
+
+/* iOS特有の問題への対応 */
+@media (max-width: 768px) {
+    .ios-device .clicker-content {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .ios-device .clicker-buildings,
+    .ios-device .clicker-upgrades,
+    .ios-device .clicker-achievements {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* iPhoneでのスクロール問題修正 */
+    .ios-device .clicker-header {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+    }
+}
+
+/* タブレット向け最適化 */
+@media (min-width: 481px) and (max-width: 768px) {
+    /* タブレットでは2カラムレイアウトを維持 */
+    .clicker-sections {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* ただし横向きスマホでは高さを考慮 */
+    @media (max-height: 480px) {
+        .clicker-sections {
+            grid-template-columns: 1fr;
+        }
+        
+        .clicker-buildings, 
+        .clicker-upgrades, 
+        .clicker-achievements {
+            max-height: 150px;
+        }
+    }
+}
+
+/* モバイルでのアニメーションパフォーマンス最適化 */
+@media (max-width: 768px) {
+    /* パフォーマンス重視のアニメーション */
+    @keyframes float-up-mobile {
+        0% {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+        20% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        80% {
+            opacity: 1;
+            transform: translateY(-20px);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+    }
+    
+    .click-effect {
+        animation: float-up-mobile 1s forwards;
+    }
+    
+    /* アニメーションの最適化 */
+    .mobile-optimized-animation {
+        will-change: transform, opacity;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+    }
+    
+    .clicker-item:hover:not(.purchased):not(.unlocked) {
+        transform: none;
+    }
+    
+    .clicker-item:active:not(.purchased):not(.unlocked) {
+        background-color: rgba(255, 255, 255, 0.12);
+        transform: translateY(-2px);
+    }
+}
+
+/* タッチデバイス検出 */
+@media (pointer: coarse) {
+    /* タッチデバイス用のスタイル */
+    .tap-feedback {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .tap-feedback::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: inherit;
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .tap-feedback:active::after {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    }
+}
+
+/* ジェスチャーコントロール拡張 */
+.gesture-enabled {
+    touch-action: manipulation;
+}
+
+/* タップ時の視覚フィードバック */
+.clicker-tap-highlight {
+    position: relative;
+    overflow: hidden;
+}
+
+.clicker-tap-highlight:active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: inherit;
+    opacity: 1;
+    animation: tap-fade-out 0.5s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes tap-fade-out {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ハードウェアアクセラレーション強化 */
+.hardware-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* スワイプナビゲーション */
+.swipe-container {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    white-space: nowrap;
+    display: flex;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.swipe-container::-webkit-scrollbar {
+    display: none;
+}
+
+.swipe-item {
+    scroll-snap-align: start;
+    flex: 0 0 100%;
+}
+
+/* タブレット縦向き用の調整 */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+    .clicker-container {
+        /* タブレット用のスタイル */
+    }
+}
+
+/* 切り替えアニメーションの最適化 */
+@media (prefers-reduced-motion: reduce) {
+    .clicker-item,
+    .clicker-target,
+    .click-effect,
+    .purchased-tag,
+    .unlocked-tag {
+        transition: none !important;
+        animation: none !important;
+    }
+}
