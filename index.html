@@ -6,12 +6,18 @@
     <title>CitySim - 都市シミュレーション</title>
     <link rel="stylesheet" href="styles/styles.css">
     <link rel="stylesheet" href="styles/clicker-styles.css">
+    <link rel="stylesheet" href="styles/mobile-optimizations.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <meta name="description" content="CitySim - 都市開発シミュレーションゲーム。あなたの都市を建設し、管理しましょう。">
     <meta name="theme-color" content="#3498db">
+    <!-- モバイル向け追加設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
 </head>
 <body>
-    <header class="game-header">
+    <header class="game-header hardware-accelerated">
         <div class="logo-container">
             <h1 class="game-logo"><i class="fas fa-city"></i> CitySim</h1>
             <p class="game-tagline">あなたの理想の都市を作ろう</p>
@@ -23,13 +29,13 @@
                     <div id="time-progress-bar"></div>
                 </div>
             </div>
-            <button id="toggle-menu" class="toggle-menu-btn">
+            <button id="toggle-menu" class="toggle-menu-btn tap-highlight">
                 <i class="fas fa-bars"></i>
             </button>
         </div>
     </header>
 
-    <div class="notifications-area">
+    <div class="notifications-area ios-fixed-position-fix">
         <div class="fixed-events-container">
             <h3><i class="fas fa-bell"></i> イベント通知</h3>
             <div id="fixed-events" class="fixed-events">
@@ -39,29 +45,29 @@
     </div>
 
     <div class="main-container">
-        <section class="city-overview">
-            <div class="overview-card">
+        <section class="city-overview hardware-accelerated">
+            <div class="overview-card tap-highlight">
                 <div class="overview-icon"><i class="fas fa-users"></i></div>
                 <div class="overview-details">
                     <span class="overview-value population-value">0</span>
                     <span class="overview-label">人口</span>
                 </div>
             </div>
-            <div class="overview-card">
+            <div class="overview-card tap-highlight">
                 <div class="overview-icon"><i class="fas fa-coins"></i></div>
                 <div class="overview-details">
                     <span class="overview-value funds-value">¥1,000</span>
                     <span class="overview-label">資金</span>
                 </div>
             </div>
-            <div class="overview-card">
+            <div class="overview-card tap-highlight">
                 <div class="overview-icon"><i class="fas fa-map-marked-alt"></i></div>
                 <div class="overview-details">
                     <span class="overview-value districts-count">0</span>
                     <span class="overview-label">地区</span>
                 </div>
             </div>
-            <div class="overview-card">
+            <div class="overview-card tap-highlight">
                 <div class="overview-icon"><i class="fas fa-calendar-alt"></i></div>
                 <div class="overview-details">
                     <span class="overview-value year-value">2025年</span>
@@ -153,7 +159,7 @@
                 
                 <!-- 統計グラフ表示ボタン -->
                 <div class="stats-group">
-                    <button id="show-stats-charts" class="btn btn-secondary">
+                    <button id="show-stats-charts" class="btn btn-secondary tap-highlight">
                         <i class="fas fa-chart-bar"></i> 統計グラフを表示
                     </button>
                 </div>
@@ -181,18 +187,18 @@
                 <div class="stats-charts-container" id="stats-charts-container">
                     <h2><i class="fas fa-chart-line"></i> 都市統計グラフ</h2>
                     <div class="stats-charts">
-                        <div class="chart-tabs">
-                            <button class="chart-tab active" data-chart="population">人口</button>
-                            <button class="chart-tab" data-chart="funds">資金</button>
-                            <button class="chart-tab" data-chart="happiness">幸福度</button>
-                            <button class="chart-tab" data-chart="environment">環境</button>
-                            <button class="chart-tab" data-chart="education">教育</button>
+                        <div class="chart-tabs touch-scroll-x">
+                            <button class="chart-tab active tap-highlight" data-chart="population">人口</button>
+                            <button class="chart-tab tap-highlight" data-chart="funds">資金</button>
+                            <button class="chart-tab tap-highlight" data-chart="happiness">幸福度</button>
+                            <button class="chart-tab tap-highlight" data-chart="environment">環境</button>
+                            <button class="chart-tab tap-highlight" data-chart="education">教育</button>
                         </div>
                         <div class="chart-container">
                             <canvas id="chart-canvas"></canvas>
                         </div>
                         <div class="chart-controls">
-                            <button id="export-stats" class="btn">
+                            <button id="export-stats" class="btn tap-highlight">
                                 <i class="fas fa-download"></i> 統計データをエクスポート
                             </button>
                         </div>
@@ -213,13 +219,13 @@
             </div>
         </div>
 
-        <div class="action-panel">
-            <div class="action-tabs">
-                <button class="tab-btn active" data-tab="build"><i class="fas fa-hammer"></i> 建設</button>
-                <button class="tab-btn" data-tab="economy"><i class="fas fa-money-bill-wave"></i> 経済</button>
-                <button class="tab-btn" data-tab="policy"><i class="fas fa-balance-scale"></i> 政策</button>
-                <button class="tab-btn" data-tab="districts"><i class="fas fa-city"></i> 地区</button>
-                <button class="tab-btn" data-tab="stats"><i class="fas fa-chart-bar"></i> 統計</button>
+        <div class="action-panel hardware-accelerated">
+            <div class="action-tabs touch-scroll-x">
+                <button class="tab-btn active tap-highlight" data-tab="build"><i class="fas fa-hammer"></i> 建設</button>
+                <button class="tab-btn tap-highlight" data-tab="economy"><i class="fas fa-money-bill-wave"></i> 経済</button>
+                <button class="tab-btn tap-highlight" data-tab="policy"><i class="fas fa-balance-scale"></i> 政策</button>
+                <button class="tab-btn tap-highlight" data-tab="districts"><i class="fas fa-city"></i> 地区</button>
+                <button class="tab-btn tap-highlight" data-tab="stats"><i class="fas fa-chart-bar"></i> 統計</button>
             </div>
             
             <div class="tab-content" id="build-tab">
@@ -249,11 +255,11 @@
             <div class="tab-content hidden" id="stats-tab">
                 <div class="game-actions" id="stats-actions">
                     <!-- 統計アクションボタンが動的に追加されます -->
-                    <button class="action-btn" data-action="show_stats_charts">
+                    <button class="action-btn tap-highlight" data-action="show_stats_charts">
                         <i class="fas fa-chart-line"></i>
                         <span>統計グラフを表示</span>
                     </button>
-                    <button class="action-btn" data-action="export_stats">
+                    <button class="action-btn tap-highlight" data-action="export_stats">
                         <i class="fas fa-file-export"></i>
                         <span>統計データをエクスポート</span>
                     </button>
@@ -273,7 +279,7 @@
             
             <div class="tutorial-buttons">
                 <!-- ボタンはJavaScriptで動的に追加されます -->
-                <button id="close-tutorial" class="tutorial-btn">スキップ</button>
+                <button id="close-tutorial" class="tutorial-btn tap-highlight">スキップ</button>
             </div>
         </div>
     </div>
@@ -281,8 +287,16 @@
     <!-- パーティクルエフェクトコンテナ -->
     <div id="particles-container" class="particles-container"></div>
 
+    <!-- モバイルアクセスメニュー -->
+    <button id="mobile-menu-toggle" class="mobile-menu-toggle tap-highlight">
+        <i class="fas fa-ellipsis-h"></i>
+    </button>
+
     <!-- Chart.js の追加 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- モバイル最適化用スクリプト -->
+    <script src="js/mobile-optimizations.js" defer></script>
     
     <!-- 動的プリロード -->
     <script type="module" src="js/main.js"></script>
