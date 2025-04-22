@@ -1,7 +1,6 @@
 /**
  * ClickerGameComponent - 独立した資金稼ぎモードコンポーネント
  * 他のUIと完全に分離して動作します
- * モバイル最適化対応版
  */
 
 import { EnhancedClickerController } from '../controllers/EnhancedClickerController.js';
@@ -31,12 +30,10 @@ export class ClickerGameComponent {
      * @private
      */
     _detectMobileDevice() {
-        return (typeof window !== 'undefined' && (
-            window.innerWidth <= 768 || 
-            ('ontouchstart' in window) || 
-            (navigator.maxTouchPoints > 0) || 
-            (navigator.msMaxTouchPoints > 0)
-        ));
+        return (window.innerWidth <= 768) || 
+               ('ontouchstart' in window) || 
+               (navigator.maxTouchPoints > 0) || 
+               (navigator.msMaxTouchPoints > 0);
     }
     
     /**
@@ -47,7 +44,7 @@ export class ClickerGameComponent {
         // CSSファイルが既に読み込まれているか確認
         const cssLoaded = Array.from(document.styleSheets).some(styleSheet => {
             try {
-                return styleSheet.href && styleSheet.href.includes('clicker-styles.css');
+                return styleSheet.href && styleSheet.href.includes('clicker.css');
             } catch (e) {
                 // CORS制限などでアクセスできない場合はスキップ
                 return false;
@@ -58,13 +55,13 @@ export class ClickerGameComponent {
         if (!cssLoaded) {
             const linkElement = document.createElement('link');
             linkElement.rel = 'stylesheet';
-            linkElement.href = 'styles/clicker-styles.css';
+            linkElement.href = 'styles/clicker.css';
             linkElement.id = 'clicker-styles';
             document.head.appendChild(linkElement);
             console.log('クリッカーモードのCSSを読み込みました');
         }
         
-        // モバイル最適化用CSSの読み込み
+        // モバイル用のスタイルシートを読み込む
         if (this.isMobile) {
             const mobileCssLoaded = Array.from(document.styleSheets).some(styleSheet => {
                 try {
@@ -80,7 +77,7 @@ export class ClickerGameComponent {
                 mobileLink.href = 'styles/clicker-mobile-optimizations.css';
                 mobileLink.id = 'clicker-mobile-styles';
                 document.head.appendChild(mobileLink);
-                console.log('モバイル最適化用クリッカーCSSを読み込みました');
+                console.log('モバイル最適化クリッカーモードのCSSを読み込みました');
             }
         }
     }
@@ -88,38 +85,29 @@ export class ClickerGameComponent {
     /**
      * コンポーネントの初期化
      */
-    initialize() {
+    async initialize() {
         if (this.initialized) return;
         
-        // モバイル向けコントローラをインポート
+        // モバイルデバイスの場合は最適化されたコントローラを使用
         if (this.isMobile) {
-            // 動的インポート
-            import('../controllers/EnhancedClickerController-mobile.js')
-                .then(module => {
-                    // モバイル最適化版コントローラを使用
-                    this.controller = new module.EnhancedClickerController(this.city, this.uiController);
-                    
-                    // 独立したコンテナの作成
-                    this._createContainerElement();
-                    
-                    this.initialized = true;
-                })
-                .catch(error => {
-                    console.error('モバイル最適化コントローラの読み込みに失敗したため、標準版を使用します', error);
-                    // フォールバック: 標準のコントローラを使用
-                    this.controller = new EnhancedClickerController(this.city, this.uiController);
-                    this._createContainerElement();
-                    this.initialized = true;
-                });
+            try {
+                // 動的にモジュールをインポート
+                const { EnhancedClickerController: MobileController } = await import('../controllers/EnhancedClickerController-mobile.js');
+                this.controller = new MobileController(this.city, this.uiController);
+                console.log('モバイル最適化クリッカーコントローラを使用します');
+            } catch (error) {
+                console.warn('モバイル最適化コントローラの読み込みに失敗しました。通常版を使用します', error);
+                this.controller = new EnhancedClickerController(this.city, this.uiController);
+            }
         } else {
-            // デスクトップ向け標準コントローラ
+            // デスクトップ向けの通常コントローラ
             this.controller = new EnhancedClickerController(this.city, this.uiController);
-            
-            // 独立したコンテナの作成
-            this._createContainerElement();
-            
-            this.initialized = true;
         }
+        
+        // 独立したコンテナの作成
+        this._createContainerElement();
+        
+        this.initialized = true;
     }
     
     /**
@@ -144,7 +132,7 @@ export class ClickerGameComponent {
         this.containerElement.style.zIndex = '9999';
         this.containerElement.style.display = 'none';
         
-        // モバイルデバイス用のクラス追加
+        // モバイルデバイスの場合はモバイルクラスを追加
         if (this.isMobile) {
             this.containerElement.classList.add('mobile-view');
         }
@@ -170,15 +158,24 @@ export class ClickerGameComponent {
             // CSSの読み込み
             const linkElement = document.createElement('link');
             linkElement.rel = 'stylesheet';
-            linkElement.href = 'styles/clicker-styles.css';
+            linkElement.href = 'styles/clicker.css';
             iframeDoc.head.appendChild(linkElement);
             
-            // モバイル最適化用CSSの読み込み
+            // モバイル向けのCSSも読み込む
             if (this.isMobile) {
-                const mobileLinkElement = document.createElement('link');
-                mobileLinkElement.rel = 'stylesheet';
-                mobileLinkElement.href = 'styles/clicker-mobile-optimizations.css';
-                iframeDoc.head.appendChild(mobileLinkElement);
+                const mobileCssLink = document.createElement('link');
+                mobileCssLink.rel = 'stylesheet';
+                mobileCssLink.href = 'styles/clicker-mobile-optimizations.css';
+                iframeDoc.head.appendChild(mobileCssLink);
+                
+                // モバイルデバイス向けのメタタグ追加
+                const viewportMeta = document.createElement('meta');
+                viewportMeta.name = 'viewport';
+                viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+                iframeDoc.head.appendChild(viewportMeta);
+                
+                // モバイルクラスを追加
+                iframeDoc.body.classList.add('mobile-view');
             }
             
             // Font Awesomeの読み込み
@@ -226,21 +223,6 @@ export class ClickerGameComponent {
                             </div>
                         </div>
                         
-                        ${this.isMobile ? `
-                        <!-- モバイル向けナビゲーションタブ -->
-                        <div class="clicker-mobile-tabs touch-scroll-x">
-                            <button class="clicker-tab active" data-section="buildings">
-                                <i class="fas fa-building"></i> 建物
-                            </button>
-                            <button class="clicker-tab" data-section="upgrades">
-                                <i class="fas fa-arrow-up"></i> アップグレード
-                            </button>
-                            <button class="clicker-tab" data-section="achievements">
-                                <i class="fas fa-trophy"></i> 実績
-                            </button>
-                        </div>
-                        ` : ''}
-                        
                         <div class="clicker-sections">
                             <div class="clicker-section">
                                 <h3><i class="fas fa-building"></i> 建物</h3>
@@ -265,22 +247,6 @@ export class ClickerGameComponent {
                     </div>
                 </div>
             `;
-            
-            // モバイル向けに最適化されたボディクラスを追加
-            if (this.isMobile) {
-                iframeDoc.body.classList.add('mobile-view');
-                iframeDoc.body.classList.add('no-zoom');
-                
-                // iOS検出
-                if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-                    iframeDoc.body.classList.add('ios-device');
-                }
-                
-                // Android検出
-                if (/Android/.test(navigator.userAgent)) {
-                    iframeDoc.body.classList.add('android-device');
-                }
-            }
             
             // イベントハンドラを設定
             this._setupEventListeners(iframeDoc);
@@ -313,26 +279,25 @@ export class ClickerGameComponent {
         // クリックターゲットのイベントリスナー
         const clickTarget = doc.getElementById('clicker-target');
         if (clickTarget) {
+            // モバイルデバイスかどうかでイベントを分ける
             if (this.isMobile) {
-                // モバイル向けタッチイベント
                 clickTarget.addEventListener('touchstart', (e) => {
-                    // タッチイベントをコントローラに伝える
-                    if (this.controller && typeof this.controller._handleTouchStart === 'function') {
-                        this.controller._handleTouchStart(e);
-                    } else if (this.controller) {
-                        // フォールバック
-                        this.controller.handleClickFromComponent(e);
-                    }
-                }, { passive: false });
+                    // クリックイベントをコントローラに伝える
+                    e.preventDefault(); // モバイルでの余計な動作を防止
+                });
                 
                 clickTarget.addEventListener('touchend', (e) => {
-                    // タッチイベントをコントローラに伝える
-                    if (this.controller && typeof this.controller._handleTouchEnd === 'function') {
-                        this.controller._handleTouchEnd(e);
+                    // クリックイベントをコントローラに伝える
+                    if (this.controller) {
+                        const touch = e.changedTouches[0];
+                        this.controller.handleClickFromComponent({
+                            clientX: touch.clientX,
+                            clientY: touch.clientY
+                        });
                     }
-                }, { passive: false });
+                    e.preventDefault(); // モバイルでの余計な動作を防止
+                });
             } else {
-                // デスクトップ向けクリックイベント
                 clickTarget.addEventListener('click', (e) => {
                     // クリックイベントをコントローラに伝える
                     if (this.controller) {
@@ -342,32 +307,14 @@ export class ClickerGameComponent {
             }
         }
         
-        // モバイル用タブがある場合はイベントリスナーを設定
+        // モバイル向けのタッチイベント最適化
         if (this.isMobile) {
-            const mobileTabs = doc.querySelectorAll('.clicker-tab');
-            mobileTabs.forEach(tab => {
-                tab.addEventListener('touchend', (e) => {
+            doc.addEventListener('touchmove', (e) => {
+                // ターゲット上でのスクロールを防止
+                if (e.target.closest('#clicker-target')) {
                     e.preventDefault();
-                    
-                    // すべてのタブから active クラスを削除
-                    mobileTabs.forEach(t => t.classList.remove('active'));
-                    
-                    // 選択されたタブに active クラスを追加
-                    tab.classList.add('active');
-                    
-                    // セクションの表示切替
-                    const sectionName = tab.getAttribute('data-section');
-                    const sections = doc.querySelectorAll('.clicker-section');
-                    
-                    sections.forEach(section => {
-                        if (section.querySelector(`.clicker-${sectionName}`)) {
-                            section.style.display = 'block';
-                        } else {
-                            section.style.display = 'none';
-                        }
-                    });
-                });
-            });
+                }
+            }, { passive: false });
         }
     }
 
@@ -382,9 +329,9 @@ export class ClickerGameComponent {
     /**
      * コンポーネントを表示
      */
-    show() {
+    async show() {
         if (!this.initialized) {
-            this.initialize();
+            await this.initialize();
         }
         
         if (this.containerElement) {
