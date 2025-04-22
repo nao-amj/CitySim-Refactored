@@ -1,0 +1,398 @@
+/* CitySim モバイル最適化用追加スタイル */
+
+/* スクロール動作とタッチ操作の最適化 */
+html, body {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* タップ可能な要素のタッチエリア拡大 */
+button, 
+.action-btn, 
+.tab-btn, 
+.district-item, 
+.clicker-item-btn {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* スマホサイズでのダッシュボードレイアウト調整 */
+@media (max-width: 768px) {
+    .dashboard {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .city-stats,
+    .game-content,
+    .districts-sidebar {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* スマホでのアクションパネル改善 */
+    .action-panel {
+        position: sticky;
+        bottom: 0;
+        z-index: 100;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .action-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        white-space: nowrap;
+        display: flex;
+        flex-wrap: nowrap;
+    }
+    
+    .action-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .tab-btn {
+        flex: 0 0 auto;
+        padding: 12px 20px;
+    }
+    
+    /* アクションボタンのタッチ操作最適化 */
+    .game-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+    }
+    
+    .action-btn {
+        width: 100%;
+        padding: 12px 8px;
+        touch-action: manipulation;
+        transition: transform 0.1s, background-color 0.2s;
+    }
+    
+    .action-btn:active {
+        transform: scale(0.98);
+        background-color: #f0f0f0;
+    }
+    
+    /* ヘッダーの最適化 */
+    .game-header {
+        padding: 10px;
+    }
+    
+    .overview-card {
+        padding: 10px;
+    }
+    
+    .overview-icon {
+        width: 36px;
+        height: 36px;
+        margin-right: 10px;
+    }
+    
+    /* スマホでも見やすい都市マップ */
+    .city-map-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+    }
+    
+    .map-cell {
+        border-radius: 8px;
+    }
+    
+    /* 通知エリアのモバイル最適化 */
+    .notifications-area {
+        width: 90%;
+        max-width: 350px;
+    }
+    
+    /* ダイアログのモバイル最適化 */
+    .dialog-content {
+        width: 90%;
+        max-width: 350px;
+        max-height: 80vh;
+        padding: 15px;
+    }
+    
+    /* フォーム要素のタッチ操作最適化 */
+    input, select, textarea {
+        font-size: 16px; /* iOSでズームインを防止 */
+        padding: 12px;
+    }
+    
+    /* チャート表示の最適化 */
+    .chart-container {
+        height: 200px;
+    }
+}
+
+/* より小さいスマホ画面用の調整 */
+@media (max-width: 480px) {
+    .city-overview {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .overview-value {
+        font-size: 1rem;
+    }
+    
+    .overview-label {
+        font-size: 0.7rem;
+    }
+    
+    .game-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .action-btn i {
+        font-size: 1.2rem;
+    }
+    
+    .action-btn span {
+        font-size: 0.8rem;
+    }
+    
+    /* 地区詳細のモバイル最適化 */
+    .district-stats {
+        flex-direction: column;
+    }
+    
+    .district-actions {
+        flex-direction: column;
+    }
+    
+    /* タブコンテンツの調整 */
+    .tab-content {
+        padding: 10px;
+    }
+}
+
+/* ジェスチャー対応のヘルパークラス */
+.touch-scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    white-space: nowrap;
+}
+
+.touch-scroll-x::-webkit-scrollbar {
+    display: none;
+}
+
+/* スマホでのタップフィードバックを改善 */
+.tap-highlight {
+    position: relative;
+    overflow: hidden;
+}
+
+.tap-highlight::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1) translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.tap-highlight:active::after {
+    animation: tap-animation 0.4s ease-out;
+}
+
+@keyframes tap-animation {
+    0% {
+        opacity: 1;
+        transform: scale(0) translate(-50%, -50%);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(20) translate(-50%, -50%);
+    }
+}
+
+/* スクロールパフォーマンス最適化 */
+.hardware-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* iOSでの固定要素まわりのスクロール問題修正 */
+.ios-fixed-position-fix {
+    position: fixed;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* スマホでのドラッグ操作サポート */
+.draggable-area {
+    cursor: grab;
+    touch-action: pan-x pan-y;
+}
+
+.draggable-area:active {
+    cursor: grabbing;
+}
+
+/* タッチジェスチャー検出用 */
+.detect-touch-device {
+    display: none;
+}
+
+@media (pointer: coarse) {
+    .detect-touch-device {
+        display: block;
+    }
+}
+
+/* バッテリー消費を抑えるダークテーマ（オプション） */
+@media (prefers-color-scheme: dark) {
+    .dark-mode-support {
+        background-color: #121212;
+        color: #f1f1f1;
+    }
+}
+
+/* デバイス回転時の調整 */
+@media (orientation: portrait) {
+    .orientation-aware {
+        flex-direction: column;
+    }
+}
+
+@media (orientation: landscape) {
+    .orientation-aware {
+        flex-direction: row;
+    }
+    
+    /* 横向きスマホでの特別レイアウト */
+    @media (max-height: 500px) {
+        .dashboard {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        
+        .city-stats {
+            flex: 0 0 50%;
+        }
+        
+        .game-content {
+            flex: 0 0 50%;
+        }
+        
+        .districts-sidebar {
+            flex: 1 0 100%;
+        }
+    }
+}
+
+/* モバイルでのスムーズなアニメーション */
+.mobile-optimized-animation {
+    transition-property: transform, opacity;
+    will-change: transform, opacity;
+}
+
+/* スマホでの可視性向上のための高コントラストモード */
+.high-contrast-mobile {
+    --primary-color: #0066cc;
+    --secondary-color: #00aa44;
+    --accent-color: #ff6600;
+    --danger-color: #cc0000;
+    color: #000000;
+    background-color: #ffffff;
+}
+
+/* クリックイベントでのちらつき防止 */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* フォントサイズの動的調整 */
+html {
+    font-size: 16px;
+}
+
+@media (max-width: 320px) {
+    html {
+        font-size: 14px;
+    }
+}
+
+/* モバイルでのメニュー展開ボタン */
+.mobile-menu-toggle {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: block;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        border: none;
+        font-size: 1.3rem;
+    }
+}
+
+/* クリッカーゲームのモバイル最適化追加スタイル */
+@media (max-width: 768px) {
+    .clicker-target {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .clicker-item {
+        padding: 12px;
+    }
+    
+    .clicker-item-btn {
+        padding: 12px;
+    }
+    
+    .clicker-sections {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* モバイルでのズームイン防止 */
+    .no-zoom {
+        touch-action: manipulation;
+    }
+    
+    /* スワイプナビゲーションサポート */
+    .swipe-container {
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+    }
+
+    .swipe-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    .swipe-item {
+        scroll-snap-align: start;
+        width: 100%;
+        flex-shrink: 0;
+    }
+}
