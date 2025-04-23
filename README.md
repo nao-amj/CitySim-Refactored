@@ -127,6 +127,119 @@
 - AIアドバイザー機能
 - マルチプレイヤーモード
 
+## クラス図
+
+以下は主要なクラスの構造を示すクラス図です（Mermaid形式）。
+```mermaid
+classDiagram
+    City <|-- UIController
+    City <|-- GameController
+    City <|-- ScenarioEditor
+    City <|-- ClickerGameComponent
+    City o-- Building
+    City o-- District
+
+    class City {
+        - name: string
+        - year: number
+        - population: number
+        - funds: number
+        - happiness: number
+        - environment: number
+        - education: number
+        - taxRate: number
+        + saveState(): void
+        + loadState(): void
+    }
+    class Building {
+        - type: string
+        - cost: number
+        + applyEffects(city: City): void
+    }
+    class District {
+        - id: string
+        - type: string
+        - level: number
+        - buildings: Object
+        + upgrade(): void
+        + specialize(type: string): void
+    }
+    class UIController {
+        - city: City
+        - timeManager: TimeManager
+        + init(app): void
+        + updateAllStatDisplays(): void
+        + _switchTab(tabName: string): void
+    }
+    class GameController {
+        - city: City
+        - timeManager: TimeManager
+        - eventSystem: EventSystem
+        - uiController: UIController
+        + start(): void
+        + switchGameMode(mode: string): void
+    }
+    class ScenarioEditor {
+        - city: City
+        + show(): void
+        + hide(): void
+    }
+    class DataDashboard {
+        - city: City
+        + show(): void
+        + hide(): void
+    }
+    class PluginManager {
+        + initializeAll(context: Object): void
+    }
+    class ClickerGameComponent {
+        - clickerController: EnhancedClickerController
+        + show(): void
+        + hide(): void
+    }
+    class EnhancedClickerController {
+        - state: Object
+        - isMobile: boolean
+        + _renderBuildings(): void
+        + _handleClick(event): void
+    }
+```
+
+## ゲーム仕様書
+
+### 目的
+プレイヤーは市長として都市を発展させ、人口・幸福度・環境・教育など複数の指標をバランスよく維持・向上させることを目指します。
+
+### 主な機能
+1. **地区システム**: 住宅・商業・工業・教育・環境保全の5タイプを持つ地区を作成・アップグレードし、専門化を設定。
+2. **都市マップ**: グリッド状に配置した地区を視覚的に管理。
+3. **経済管理**: 税率設定、ローン申請、貿易機能（将来拡張）など。
+4. **統計とデータダッシュボード**: 時系列データを記録し、グラフ表示とエクスポートが可能。
+5. **シナリオエディタ**: 初期パラメータ（人口、資金、幸福度、環境）を自由に設定し、シナリオをJSON形式で保存。
+6. **クリッカーモード**: クリックによる即時収入獲得と、建物・アップグレード購入による自動収入強化を組み合わせたミニゲーム。
+7. **プラグイン機構**: `<script data-plugin>` タグで外部プラグインを読み込み、機能拡張が可能。
+
+### コントローラの責務
+- `UIController`: 画面表示およびユーザー操作の橋渡し
+- `GameController`: ゲーム状態の更新、時間管理、イベント制御
+- `ScenarioEditor`/`DataDashboard`: 追加機能としてシナリオ編集・データ可視化を担う
+- `ClickerGameComponent`: クリッカーモード切替時の表示と操作ハンドリング
+- `PluginManager`: 外部プラグインの登録・初期化
+
+### データ保存
+- `SaveManager`: `localStorage` を利用し、都市データとチュートリアル進行状態を自動・手動で保存・復元します。
+
+### 将来拡張ポイント
+- オンライン協力/対戦モード
+- より高度な経済シミュレーション
+- ユーザー作成プラグインのパブリッシュ機能
+
+以上が最新仕様に基づく概要と設計情報です。READMEをご確認ください。
+
 ## ライセンス
 
 MIT License
+
+## プラグイン仕様
+
+プラグインの開発と使用方法の詳細は [PLUGIN_SPEC.md](PLUGIN_SPEC.md) をご覧ください。

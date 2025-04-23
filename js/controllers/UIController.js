@@ -56,11 +56,8 @@ export class UIController {
             economyActions: document.getElementById('economy-actions'),
             policyActions: document.getElementById('policy-actions'),
             districtsActions: document.getElementById('districts-actions'),
-            
-            // 地区関連
-            districtsList: document.getElementById('districts-list'),
-            districtDetails: document.getElementById('district-details'),
-            districtDetailsContainer: document.getElementById('district-details-container'),
+            // 統計タブの操作ボタン要素
+            statsActions: document.getElementById('stats-actions'),
             
             // 都市マップ
             cityMap: document.getElementById('city-map'),
@@ -275,6 +272,27 @@ export class UIController {
                 });
             });
         }
+
+        // 統計タブのアクションボタン
+        if (this.elements.statsActions) {
+            this.elements.statsActions.innerHTML = `
+                <button class="action-btn tap-highlight" data-action="show_stats_charts">
+                    <i class="fas fa-chart-line"></i> 統計グラフを表示
+                </button>
+                <button class="action-btn tap-highlight" data-action="export_stats">
+                    <i class="fas fa-file-export"></i> 統計データをエクスポート
+                </button>
+                <button class="action-btn tap-highlight" data-action="open_data_dashboard">
+                    <i class="fas fa-chart-pie"></i> ダッシュボード
+                </button>
+                <button class="action-btn tap-highlight" data-action="open_scenario_editor">
+                    <i class="fas fa-edit"></i> シナリオ編集
+                </button>
+                <button class="action-btn tap-highlight" data-action="open_plugin_manager">
+                    <i class="fas fa-plug"></i> プラグイン管理
+                </button>
+            `;
+        }
     }
     
     /**
@@ -315,6 +333,28 @@ export class UIController {
         if (exportStatsBtn) {
             exportStatsBtn.addEventListener('click', () => {
                 this.events.emit('exportStatsRequest');
+            });
+        }
+       
+        // Data Dashboard button
+        const dataDashBtn = document.querySelector('[data-action="open_data_dashboard"]');
+        if (dataDashBtn) {
+            dataDashBtn.addEventListener('click', () => {
+                this.events.emit('open_data_dashboard');
+            });
+        }
+        // Scenario Editor button
+        const scenarioBtn = document.querySelector('[data-action="open_scenario_editor"]');
+        if (scenarioBtn) {
+            scenarioBtn.addEventListener('click', () => {
+                this.events.emit('open_scenario_editor');
+            });
+        }
+        // Plugin Manager button
+        const pluginBtn = document.querySelector('[data-action="open_plugin_manager"]');
+        if (pluginBtn) {
+            pluginBtn.addEventListener('click', () => {
+                this.events.emit('open_plugin_manager');
             });
         }
     }

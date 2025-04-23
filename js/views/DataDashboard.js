@@ -1,4 +1,4 @@
-import { Chart } from 'chart.js';
+// assumes Chart.js loaded globally via <script> in index.html
 
 export class DataDashboard {
     constructor(city) {
@@ -16,9 +16,12 @@ export class DataDashboard {
         `;
         document.getElementById('close-dashboard').addEventListener('click', () => this.hide());
         const ctx = document.getElementById('dashboard-chart').getContext('2d');
-        const labels = this.city.history.map(h => h.timestamp);
-        const popData = this.city.history.map(h => h.population);
-        const fundsData = this.city.history.map(h => h.funds);
+        // Use recorded statistics from the city model
+        const stats = this.city.statistics || {};
+        // Prepare labels and datasets from statistics.population and statistics.funds
+        const labels = (stats.population || []).map(entry => entry.year);
+        const popData = (stats.population || []).map(entry => entry.value);
+        const fundsData = (stats.funds || []).map(entry => entry.value);
         this.chart = new Chart(ctx, {
             type: 'line',
             data: {

@@ -14,6 +14,10 @@ import { TimeManager } from './services/TimeManager.js';
 import { SaveManager } from './services/SaveManager.js';
 import { TutorialController } from './controllers/TutorialController.js';
 import { ClickerGameComponent } from './components/ClickerGameComponent.js';
+import { DataDashboard } from './views/DataDashboard.js';
+import { ScenarioEditor } from './views/ScenarioEditor.js';
+import { PluginManager } from './services/PluginManager.js';
+import { PluginManagerView } from './views/PluginManagerView.js';
 
 // DOMContentLoaded: bootstrap application
 document.addEventListener('DOMContentLoaded', () => {
@@ -58,8 +62,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // load saved game
   gameController.loadGame(saveManager);
   app.start();
+  // Plugin Manager UI
+  const pluginManagerView = new PluginManagerView();
+  // Instantiate new features
+  const dataDashboard = new DataDashboard(city);
+  const scenarioEditor = new ScenarioEditor(city);
+  // Bind Plugin Manager
+  // Initialize plugins
+  PluginManager.initializeAll({ city, timeManager, eventSystem, gameController, uiController });
+
   // Show/hide clicker overlay on mode change
-  eventSystem.events.on('eventTriggered', () => {}); // no-op to ensure eventSystem referenced
   gameController.events.on('gameModeChanged', ({ mode }) => {
     if (mode === 'clicker') {
       clickerComp.show();
@@ -73,6 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
       clickerComp.show();
     }
   });
+  // Bind Data Dashboard and Scenario Editor
+  uiController.events.on('open_data_dashboard', () => dataDashboard.show());
+  uiController.events.on('open_scenario_editor', () => scenarioEditor.show());
+  // Bind Plugin Manager
+  uiController.events.on('open_plugin_manager', () => pluginManagerView.show());
+
   // auto-save on unload
   window.addEventListener('beforeunload', () => saveManager.saveGame('auto'));
   // debug global
