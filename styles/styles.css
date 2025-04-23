@@ -482,6 +482,13 @@ body {
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
     overflow: hidden;
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 100px);
+    max-width: 1200px;
+    z-index: 500;
 }
 
 .action-tabs {
@@ -1073,6 +1080,7 @@ body {
     box-shadow: var(--box-shadow);
     padding: 20px;
     margin-top: 20px;
+    display: none;
 }
 
 .city-map-container h2 {
@@ -1476,5 +1484,41 @@ body {
     
     .chart-tab {
         flex: 1 1 calc(50% - 10px);
+    }
+}
+
+/* PC向けUI刷新 */
+@media (min-width: 1100px) {
+    /* 左側にアクションパネルを固定表示 */
+    .action-panel {
+        position: fixed;
+        top: 80px;
+        left: 20px;
+        bottom: 20px;
+        width: 240px;
+        max-width: 240px;
+        overflow-y: auto;
+        transform: none;
+        margin: 0;
+        z-index: 500;
+    }
+    /* ダッシュボード本体を右にずらす */
+    .dashboard {
+        margin-left: 280px;
+    }
+    /* ボタンを大きく見やすく */
+    .action-btn {
+        width: 100%;
+        min-width: auto;
+        padding: 18px;
+        font-size: 1.05rem;
+    }
+    .tab-btn {
+        padding: 14px 12px;
+        font-size: 1rem;
+    }
+    /* フッター固定を解除 */
+    .action-panel {
+        bottom: auto;
     }
 }
